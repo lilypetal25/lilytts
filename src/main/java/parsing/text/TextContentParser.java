@@ -81,7 +81,7 @@ public class TextContentParser implements ContentParser {
     private static String readNextLineWithContent(BufferedReader reader) throws IOException {
         String nextLine = reader.readLine();
 
-        while (nextLine.isBlank()) {
+        while (nextLine != null && nextLine.isBlank()) {
             nextLine = reader.readLine();
         }
 
