@@ -48,6 +48,10 @@ public class TextContentParser implements ContentParser {
         this.recognizeSectionBreaks = recognizeSectionBreaks;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     @Override
     public List<ContentItem> readContent(Reader input) throws IOException {
         final BufferedReader reader = new BufferedReader(input);
