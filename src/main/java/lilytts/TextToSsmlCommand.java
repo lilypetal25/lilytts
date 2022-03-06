@@ -17,10 +17,14 @@ class TextToSsmlCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        System.out.printf("Output directory: %s\n", outputDirectory.getAbsolutePath());
+        if (!(outputDirectory.exists() && outputDirectory.isDirectory())) {
+            throw new IllegalArgumentException("Invalid output directory: " + outputDirectory.getAbsolutePath());
+        }
         
         for (File file : inputFiles) {
-            System.out.printf("Input file: %s\n", file.getAbsolutePath());
+            if (!(file.exists() && file.isFile())) {
+                throw new IllegalArgumentException("Invalid input file: " + file.getAbsolutePath());
+            }
         }
 
         return 0;

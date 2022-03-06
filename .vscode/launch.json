@@ -15,7 +15,7 @@
             "name": "Launch App",
             "request": "launch",
             "mainClass": "lilytts.App",
-            "projectName": "text-to-ssml",
+            "projectName": "lilytts",
             "args": "text-to-ssml /Users/brad/Downloads \"/Users/brad/Downloads/Chapter 1.txt\""
         }
     ]
