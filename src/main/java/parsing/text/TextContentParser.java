@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import content.ChapterEndContent;
 import content.ChapterTitleContent;
 import content.ContentItem;
 import content.ParagraphContent;
@@ -19,6 +20,7 @@ public class TextContentParser implements ContentParser {
     public static class Builder {
         private boolean recognizeChapter = true;
         private boolean recognizeSectionBreaks = true;
+        private boolean appendChapterEnd = true;
 
         private Builder() {
         }
@@ -33,19 +35,30 @@ public class TextContentParser implements ContentParser {
             return this;
         }
 
+        public Builder setAppendChapterEnd(boolean appendChapterEnd) {
+            this.appendChapterEnd = appendChapterEnd;
+            return this;
+        }
+
         public TextContentParser build() {
-            return new TextContentParser(recognizeChapter, recognizeSectionBreaks);
+            return new TextContentParser(
+                recognizeChapter,
+                recognizeSectionBreaks,
+                appendChapterEnd);
         }
     }
 
     private final boolean recognizeChapter;
     private final boolean recognizeSectionBreaks;
+    private final boolean appendChapterEnd;
 
     private TextContentParser(
             final boolean recognizeChapter,
-            final boolean recognizeSectionBreaks) {
+            final boolean recognizeSectionBreaks,
+            final boolean appendChapterEnd) {
         this.recognizeChapter = recognizeChapter;
         this.recognizeSectionBreaks = recognizeSectionBreaks;
+        this.appendChapterEnd = appendChapterEnd;
     }
 
     public static Builder builder() {
@@ -73,6 +86,10 @@ public class TextContentParser implements ContentParser {
             }
 
             nextLine = readNextLineWithContent(reader);
+        }
+
+        if (this.appendChapterEnd) {
+            results.add(new ChapterEndContent());
         }
 
         return results;

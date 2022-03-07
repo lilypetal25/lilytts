@@ -5,6 +5,7 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
+import content.ChapterEndContent;
 import content.ChapterTitleContent;
 import content.ContentItem;
 import content.ParagraphContent;
@@ -29,6 +30,8 @@ public class SSMLWriter {
                     writeParagraph(out, (ParagraphContent)item);
                 } else if (item instanceof SectionBreakContent) {
                     writeSectionBreak(out, (SectionBreakContent)item);
+                } else if (item instanceof ChapterEndContent) {
+                    writeChapterEnd(out, (ChapterEndContent)item);
                 } else {
                     throw new IllegalArgumentException("Unknown content item type: " + item.getClass().getSimpleName());
                 }
@@ -50,7 +53,7 @@ public class SSMLWriter {
         out.writeCharacters(item.getContent());
         out.writeEndElement();
 
-        writeBreak(out, "2s");
+        writeBreak(out, "1s");
     }
 
     private void writeParagraph(XMLStreamWriter out, ParagraphContent item) throws XMLStreamException {
@@ -60,7 +63,11 @@ public class SSMLWriter {
     }
 
     private void writeSectionBreak(XMLStreamWriter out, SectionBreakContent item) throws XMLStreamException {
-        writeBreak(out, "3s");
+        writeBreak(out, "2s");
+    }
+
+    private void writeChapterEnd(XMLStreamWriter out, ChapterEndContent item) throws XMLStreamException {
+        writeBreak(out, "2s");
     }
 
     private void writeBreak(XMLStreamWriter out, String time) throws XMLStreamException {
