@@ -20,7 +20,7 @@ public class SSMLWriter {
             out.writeStartElement("speak");
             out.writeAttribute("version", "1.0");
             out.writeDefaultNamespace("http://www.w3.org/2001/10/synthesis");
-            out.writeAttribute(W3C_XML_SCHEMA_NS_URI, "lang", "en-US");
+            out.writeAttribute("xml", W3C_XML_SCHEMA_NS_URI, "lang", "en-US");
 
             for (ContentItem item : content) {
                 if (item instanceof ChapterTitleContent) {
