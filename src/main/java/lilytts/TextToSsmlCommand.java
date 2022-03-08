@@ -13,6 +13,7 @@ import parsing.ContentParser;
 import parsing.text.TextContentParser;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
+import processing.ContentSplitter;
 import ssml.SSMLWriter;
 
 @Command(name = "text-to-ssml")
@@ -30,15 +31,23 @@ class TextToSsmlCommand implements Callable<Integer> {
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = new SSMLWriter();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
+        final ContentSplitter splitter = ContentSplitter.builder().build();
 
         for (File inputFile : inputFiles) {
-            final String outputFileName = removeFileExtension(inputFile.getName()) + ".xml";
-
             final FileReader inputStream = new FileReader(inputFile);
-            FileOutputStream outputStream = new FileOutputStream(new File(outputDirectory, outputFileName));
 
-            List<ContentItem> content = contentParser.readContent(inputStream);
-            ssmlWriter.writeSSML(content, xmlOutputFactory.createXMLStreamWriter(outputStream));
+            final List<ContentItem> content = contentParser.readContent(inputStream);
+            final List<List<ContentItem>> chunks = splitter.splitContent(content);
+
+            for (int i = 0; i < chunks.size(); i++) {
+                final String outputFileName = chunks.size() > 1 ?
+                    removeFileExtension(inputFile.getName()) + " (Part " + i + ").xml" :
+                    removeFileExtension(inputFile.getName()) + ".xml";
+
+                final FileOutputStream outputStream = new FileOutputStream(new File(outputDirectory, outputFileName));
+
+                ssmlWriter.writeSSML(chunks.get(i), xmlOutputFactory.createXMLStreamWriter(outputStream));
+            }
         }
 
         return 0;
