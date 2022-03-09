@@ -5,7 +5,8 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 
 @Command(mixinStandardHelpOptions = true, subcommands = {
-    TextToSsmlCommand.class
+    TextToSsmlCommand.class,
+    TextToSpeechAzureCommand.class
 })
 class RootCommand implements Callable<Integer> {
     @Override

@@ -16,7 +16,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "text-to-ssml /Users/brad/Downloads/Output \"/Users/brad/Downloads/Chapter 1.txt\""
+            "args": "text-to-speech-azure @/Users/brad/Downloads/argfile.txt"
         }
     ]
 }
