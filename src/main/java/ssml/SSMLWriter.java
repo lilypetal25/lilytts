@@ -22,7 +22,10 @@ public class SSMLWriter {
             out.writeAttribute("version", "1.0");
             out.writeDefaultNamespace("http://www.w3.org/2001/10/synthesis");
             out.writeAttribute("xml", W3C_XML_SCHEMA_NS_URI, "lang", "en-US");
+            out.writeStartElement("voice");
+            out.writeAttribute("name", "en-US-JennyNeural");
 
+            // TODO: This would be better as a visitor pattern.
             for (ContentItem item : content) {
                 if (item instanceof ChapterTitleContent) {
                     writeChapterTitle(out, (ChapterTitleContent)item);
@@ -37,6 +40,7 @@ public class SSMLWriter {
                 }
             }
 
+            out.writeEndElement();
             out.writeEndElement();
             out.writeEndDocument();
         } catch (XMLStreamException e) {
