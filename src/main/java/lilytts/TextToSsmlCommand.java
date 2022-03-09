@@ -41,7 +41,7 @@ class TextToSsmlCommand implements Callable<Integer> {
 
             for (int i = 0; i < chunks.size(); i++) {
                 final String outputFileName = chunks.size() > 1 ?
-                    removeFileExtension(inputFile.getName()) + " (Part " + i + ").xml" :
+                    removeFileExtension(inputFile.getName()) + " (Part " + (i+1) + ").xml" :
                     removeFileExtension(inputFile.getName()) + ".xml";
 
                 final FileOutputStream outputStream = new FileOutputStream(new File(outputDirectory, outputFileName));

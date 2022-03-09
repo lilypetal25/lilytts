@@ -11,7 +11,7 @@ import content.ParagraphContent;
 
 public class ContentSplitter {
     public static class Builder {
-        private int maxChunkCharacters = 1500;
+        private int maxChunkCharacters = 5000;
 
         private Builder() {
         }
@@ -53,6 +53,8 @@ public class ContentSplitter {
                 continue;
             }
 
+            // TODO: This rounding code might have a bug. Seems to be rounding in one direction all the time.
+            //
             // Decide whether to end this chunk before the current item, or afterwards.
             final int roundDownDistance = averageChunkLength - currentChunkLength;
             final int roundUpDistance = (currentChunkLength + getLength(item)) - averageChunkLength;
