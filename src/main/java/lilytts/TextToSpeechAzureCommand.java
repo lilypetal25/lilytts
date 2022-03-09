@@ -50,7 +50,7 @@ class TextToSpeechAzureCommand implements Callable<Integer> {
         final ContentSplitter splitter = ContentSplitter.builder().build();
 
         final SpeechConfig config = SpeechConfig.fromSubscription(subscriptionKey, serviceRegion);
-        config.setSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3);
+        config.setSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3);
 
         for (File inputFile : inputFiles) {
             final FileReader inputStream = new FileReader(inputFile);
