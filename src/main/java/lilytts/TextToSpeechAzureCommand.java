@@ -31,7 +31,7 @@ class TextToSpeechAzureCommand implements Callable<Integer> {
     @Parameters(index = "0")
     private File outputDirectory;
 
-    @Parameters(index = "1")
+    @Parameters(index = "1..*")
     private List<File> inputFiles;
 
     @Option(names = { "--subscriptionKey" })

@@ -23,7 +23,7 @@ public class SSMLWriter {
             out.writeDefaultNamespace("http://www.w3.org/2001/10/synthesis");
             out.writeAttribute("xml", W3C_XML_SCHEMA_NS_URI, "lang", "en-US");
             out.writeStartElement("voice");
-            out.writeAttribute("name", "en-US-JennyNeural");
+            out.writeAttribute("name", "en-US-ChristopherNeural");
 
             // TODO: This would be better as a visitor pattern.
             for (ContentItem item : content) {
