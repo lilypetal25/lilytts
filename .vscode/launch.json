@@ -12,11 +12,19 @@
         },
         {
             "type": "java",
-            "name": "Launch App",
+            "name": "Launch AzureTTS",
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "text-to-speech-azure @/Users/brad/Downloads/argfile.txt"
+            "args": "text-to-speech-azure @/Users/brad/Downloads/azure-argfile.txt"
+        },
+        {
+            "type": "java",
+            "name": "Launch SSML",
+            "request": "launch",
+            "mainClass": "lilytts.App",
+            "projectName": "lilytts",
+            "args": "text-to-ssml @/Users/brad/Downloads/ssml-argfile.txt"
         }
     ]
 }

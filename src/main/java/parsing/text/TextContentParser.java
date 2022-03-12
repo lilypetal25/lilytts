@@ -71,11 +71,11 @@ public class TextContentParser implements ContentParser {
 
         ArrayList<ContentItem> results = new ArrayList<>();
 
-        String nextLine = readNextLineWithContent(reader);
+        String nextLine = readNextBlock(reader);
 
         if (this.recognizeChapter && nextLine != null) {
             results.add(new ChapterTitleContent(nextLine));
-            nextLine = readNextLineWithContent(reader);
+            nextLine = readNextBlock(reader);
         }
 
         while (nextLine != null) {
@@ -85,7 +85,7 @@ public class TextContentParser implements ContentParser {
                 results.add(new ParagraphContent(nextLine));
             }
 
-            nextLine = readNextLineWithContent(reader);
+            nextLine = readNextBlock(reader);
         }
 
         if (this.appendChapterEnd) {
@@ -95,14 +95,27 @@ public class TextContentParser implements ContentParser {
         return results;
     }
 
-    private static String readNextLineWithContent(BufferedReader reader) throws IOException {
+    private static String readNextBlock(BufferedReader reader) throws IOException {
+        StringBuilder result = new StringBuilder();
+
         String nextLine = reader.readLine();
 
+        // Skip any blank lines preceding the text block.
         while (nextLine != null && nextLine.isBlank()) {
             nextLine = reader.readLine();
         }
 
-        return nextLine;
+        while (nextLine != null && !nextLine.isBlank()) {
+            // Separate lines by a space.
+            if (result.length() > 0) {
+                result.append(' ');
+            }
+
+            result.append(nextLine.trim());
+            nextLine = reader.readLine();
+        }
+
+        return result.length() > 0 ? result.toString() : null;
     }
 
     private static boolean isSectionBreak(String line) {

@@ -12,16 +12,20 @@ import content.ContentItem;
 import parsing.ContentParser;
 import parsing.text.TextContentParser;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import processing.ContentSplitter;
 import ssml.SSMLWriter;
 
 @Command(name = "text-to-ssml")
 class TextToSsmlCommand implements Callable<Integer> {
+    @Option(names = { "--voice" })
+    private String voice = null;
+
     @Parameters(index = "0")
     private File outputDirectory;
 
-    @Parameters(index = "1")
+    @Parameters(index = "1..*")
     private List<File> inputFiles;
 
     @Override
@@ -29,7 +33,7 @@ class TextToSsmlCommand implements Callable<Integer> {
         validateCommandLineParameters();
 
         final ContentParser contentParser = TextContentParser.builder().build();
-        final SSMLWriter ssmlWriter = new SSMLWriter();
+        final SSMLWriter ssmlWriter = configureSsmlWriter();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
         final ContentSplitter splitter = ContentSplitter.builder().build();
 
@@ -63,6 +67,16 @@ class TextToSsmlCommand implements Callable<Integer> {
                 throw new IllegalArgumentException("Invalid input file: " + file.getAbsolutePath());
             }
         }
+    }
+
+    private SSMLWriter configureSsmlWriter() {
+        final SSMLWriter.Builder builder = SSMLWriter.builder();
+
+        if (this.voice != null && !this.voice.isBlank()) {
+            builder.withVoice(this.voice);
+        }
+
+        return builder.build();
     }
 
     private static String removeFileExtension(String fileName) {

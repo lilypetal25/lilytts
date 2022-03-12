@@ -12,7 +12,31 @@ import content.ParagraphContent;
 import content.SectionBreakContent;
 
 public class SSMLWriter {
-    public SSMLWriter() {
+    public static class Builder {
+        private boolean writeVoiceElement = false;
+        private String voiceName = null;
+
+        public Builder withVoice(String voiceName) {
+            this.writeVoiceElement = true;
+            this.voiceName = voiceName;
+            return this;
+        }
+
+        public SSMLWriter build() {
+            return new SSMLWriter(writeVoiceElement, voiceName);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    private final boolean writeVoiceElement;
+    private final String voiceName;
+
+    private SSMLWriter(final boolean writeVoiceElement, final String voiceName) {
+        this.writeVoiceElement = writeVoiceElement;
+        this.voiceName = voiceName;
     }
 
     public void writeSSML(Iterable<ContentItem> content, XMLStreamWriter out) throws SSMLWritingException {
@@ -22,8 +46,11 @@ public class SSMLWriter {
             out.writeAttribute("version", "1.0");
             out.writeDefaultNamespace("http://www.w3.org/2001/10/synthesis");
             out.writeAttribute("xml", W3C_XML_SCHEMA_NS_URI, "lang", "en-US");
-            out.writeStartElement("voice");
-            out.writeAttribute("name", "en-US-ChristopherNeural");
+            
+            if (this.writeVoiceElement) {
+                out.writeStartElement("voice");
+                out.writeAttribute("name", this.voiceName);
+            }
 
             // TODO: This would be better as a visitor pattern.
             for (ContentItem item : content) {
@@ -40,7 +67,10 @@ public class SSMLWriter {
                 }
             }
 
-            out.writeEndElement();
+            if (this.writeVoiceElement) {
+                out.writeEndElement();
+            }
+
             out.writeEndElement();
             out.writeEndDocument();
         } catch (XMLStreamException e) {

@@ -25,6 +25,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import processing.ContentSplitter;
 import ssml.SSMLWriter;
+import synthesis.AzureVoice;
 
 @Command(name = "text-to-speech-azure")
 class TextToSpeechAzureCommand implements Callable<Integer> {
@@ -40,12 +41,15 @@ class TextToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--serviceRegion" })
     private String serviceRegion;
 
+    @Option(names = { "--voice" })
+    private AzureVoice voice = AzureVoice.Jenny;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
 
         final ContentParser contentParser = TextContentParser.builder().build();
-        final SSMLWriter ssmlWriter = new SSMLWriter();
+        final SSMLWriter ssmlWriter = SSMLWriter.builder().withVoice(voice.getVoiceName()).build();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
         final ContentSplitter splitter = ContentSplitter.builder().build();
 
