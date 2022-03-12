@@ -90,6 +90,9 @@ class TextToSpeechAzureCommand implements Callable<Integer> {
                         System.out.println("CANCELED: ErrorCode=" + cancellation.getErrorCode());
                         System.out.println("CANCELED: ErrorDetails=" + cancellation.getErrorDetails());
                     }
+
+                    // Stop execution.
+                    break;
                 } else {
                     throw new Exception("Unexpected result reason: " + result.getReason());
                 }
