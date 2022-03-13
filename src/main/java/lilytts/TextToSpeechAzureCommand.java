@@ -63,17 +63,21 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
             final FileReader inputStream = new FileReader(inputFile);
 
             final List<ContentItem> content = contentParser.readContent(inputStream);
-            final List<List<ContentItem>> chunks = splitter.splitContent(content);
+            final List<List<ContentItem>> parts = splitter.splitContent(content);
 
-            for (int i = 0; i < chunks.size(); i++) {
-                final String outputFileName = chunks.size() > 1 ?
+            System.out.printf("Converting input file '%s' to speech as %f part(s).\n",
+                inputFile.getName(),
+                parts.size());
+
+            for (int i = 0; i < parts.size(); i++) {
+                final String outputFileName = parts.size() > 1 ?
                     removeFileExtension(inputFile.getName()) + " (Part " + (i+1) + ").mp3" :
                     removeFileExtension(inputFile.getName()) + ".mp3";
                 final File outputFile = new File(outputDirectory, outputFileName);
 
                 final StringWriter ssmlStringWriter = new StringWriter();
 
-                ssmlWriter.writeSSML(chunks.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
+                ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
 
                 final AudioConfig fileOutput = AudioConfig.fromWavFileOutput(outputFile.getAbsolutePath());
                 final SpeechSynthesisResult result;
