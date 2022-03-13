@@ -65,7 +65,7 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
             final List<ContentItem> content = contentParser.readContent(inputStream);
             final List<List<ContentItem>> parts = splitter.splitContent(content);
 
-            System.out.printf("Converting input file '%s' to speech as %f part(s).\n",
+            System.out.printf("Converting input file '%s' to speech as %s part(s).\n",
                 inputFile.getName(),
                 parts.size());
 
