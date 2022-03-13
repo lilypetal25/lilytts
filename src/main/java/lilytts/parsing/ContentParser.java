@@ -1,10 +1,10 @@
-package parsing;
+package lilytts.parsing;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 
-import content.ContentItem;
+import lilytts.content.ContentItem;
 
 public interface ContentParser {
     List<ContentItem> readContent(Reader input) throws IOException;

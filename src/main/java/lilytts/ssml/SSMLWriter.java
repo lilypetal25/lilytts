@@ -1,15 +1,15 @@
-package ssml;
+package lilytts.ssml;
 
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
-import content.ChapterEndContent;
-import content.ChapterTitleContent;
-import content.ContentItem;
-import content.ParagraphContent;
-import content.SectionBreakContent;
+import lilytts.content.ChapterEndContent;
+import lilytts.content.ChapterTitleContent;
+import lilytts.content.ContentItem;
+import lilytts.content.ParagraphContent;
+import lilytts.content.SectionBreakContent;
 
 public class SSMLWriter {
     public static class Builder {

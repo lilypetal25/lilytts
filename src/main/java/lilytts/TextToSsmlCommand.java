@@ -8,17 +8,17 @@ import java.util.concurrent.Callable;
 
 import javax.xml.stream.XMLOutputFactory;
 
-import content.ContentItem;
-import parsing.ContentParser;
-import parsing.text.TextContentParser;
+import lilytts.content.ContentItem;
+import lilytts.parsing.ContentParser;
+import lilytts.parsing.text.TextContentParser;
+import lilytts.processing.ContentSplitter;
+import lilytts.ssml.SSMLWriter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import processing.ContentSplitter;
-import ssml.SSMLWriter;
 
 @Command(name = "text-to-ssml")
-class TextToSsmlCommand implements Callable<Integer> {
+public class TextToSsmlCommand implements Callable<Integer> {
     @Option(names = { "--voice" })
     private String voice = null;
 

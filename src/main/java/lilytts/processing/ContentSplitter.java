@@ -1,13 +1,12 @@
-// TODO: All packages should be nested under lilytts.
-package processing;
+package lilytts.processing;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import content.ChapterTitleContent;
-import content.ContentItem;
-import content.ParagraphContent;
+import lilytts.content.ChapterTitleContent;
+import lilytts.content.ContentItem;
+import lilytts.content.ParagraphContent;
 
 public class ContentSplitter {
     public static class Builder {

@@ -8,7 +8,7 @@ import picocli.CommandLine.Command;
     TextToSsmlCommand.class,
     TextToSpeechAzureCommand.class
 })
-class RootCommand implements Callable<Integer> {
+public class RootCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         System.out.println("Executed default RootCommand.");

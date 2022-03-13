@@ -1,4 +1,4 @@
-package content;
+package lilytts.content;
 
 public class ParagraphContent extends ContentItem {
     private final String content;

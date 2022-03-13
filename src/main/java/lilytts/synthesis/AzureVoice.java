@@ -1,4 +1,4 @@
-package synthesis;
+package lilytts.synthesis;
 
 public enum AzureVoice {
     Jenny("en-US-JennyNeural"),

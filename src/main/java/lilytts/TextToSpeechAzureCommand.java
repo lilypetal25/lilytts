@@ -17,18 +17,18 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesisResult;
 import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
-import content.ContentItem;
-import parsing.ContentParser;
-import parsing.text.TextContentParser;
+import lilytts.content.ContentItem;
+import lilytts.parsing.ContentParser;
+import lilytts.parsing.text.TextContentParser;
+import lilytts.processing.ContentSplitter;
+import lilytts.ssml.SSMLWriter;
+import lilytts.synthesis.AzureVoice;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import processing.ContentSplitter;
-import ssml.SSMLWriter;
-import synthesis.AzureVoice;
 
 @Command(name = "text-to-speech-azure")
-class TextToSpeechAzureCommand implements Callable<Integer> {
+public class TextToSpeechAzureCommand implements Callable<Integer> {
     @Parameters(index = "0")
     private File outputDirectory;
 

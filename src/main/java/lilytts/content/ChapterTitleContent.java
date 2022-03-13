@@ -1,4 +1,4 @@
-package content;
+package lilytts.content;
 
 public class ChapterTitleContent extends ContentItem {
     private final String content;

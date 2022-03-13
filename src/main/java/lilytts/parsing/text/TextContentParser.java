@@ -1,4 +1,4 @@
-package parsing.text;
+package lilytts.parsing.text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import content.ChapterEndContent;
-import content.ChapterTitleContent;
-import content.ContentItem;
-import content.ParagraphContent;
-import content.SectionBreakContent;
-import parsing.ContentParser;
+import lilytts.content.ChapterEndContent;
+import lilytts.content.ChapterTitleContent;
+import lilytts.content.ContentItem;
+import lilytts.content.ParagraphContent;
+import lilytts.content.SectionBreakContent;
+import lilytts.parsing.ContentParser;
 
 public class TextContentParser implements ContentParser {
     private static final Pattern SECTION_BREAK_PATTERN = Pattern.compile("^-{3,}$");

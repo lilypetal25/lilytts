@@ -1,4 +1,4 @@
-package ssml;
+package lilytts.ssml;
 
 public class SSMLWritingException extends Exception {
 
