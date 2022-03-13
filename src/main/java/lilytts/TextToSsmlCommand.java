@@ -19,14 +19,17 @@ import picocli.CommandLine.Parameters;
 
 @Command(name = "text-to-ssml")
 public class TextToSsmlCommand implements Callable<Integer> {
-    @Option(names = { "--voice" })
-    private String voice = null;
-
     @Parameters(index = "0")
     private File outputDirectory;
 
     @Parameters(index = "1..*")
     private List<File> inputFiles;
+
+    @Option(names = { "--voice" })
+    private String voice = null;
+
+    @Option(names = { "--maxPartCharacters" })
+    private int maxPartCharacters = 7500;
 
     @Override
     public Integer call() throws Exception {
@@ -35,7 +38,7 @@ public class TextToSsmlCommand implements Callable<Integer> {
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
-        final ContentSplitter splitter = ContentSplitter.builder().build();
+        final ContentSplitter splitter = configureSplitter();
 
         for (File inputFile : inputFiles) {
             final FileReader inputStream = new FileReader(inputFile);
@@ -55,6 +58,12 @@ public class TextToSsmlCommand implements Callable<Integer> {
         }
 
         return 0;
+    }
+
+    private ContentSplitter configureSplitter() {
+        return ContentSplitter.builder()
+            .withMaxPartCharacters(maxPartCharacters)
+            .build();
     }
 
     private void validateCommandLineParameters() {

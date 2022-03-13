@@ -44,6 +44,9 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--voice" })
     private AzureVoice voice = AzureVoice.Jenny;
 
+    @Option(names = { "--maxPartCharacters" })
+    private int maxPartCharacters = 7500;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -51,7 +54,7 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = SSMLWriter.builder().withVoice(voice.getVoiceName()).build();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
-        final ContentSplitter splitter = ContentSplitter.builder().build();
+        final ContentSplitter splitter = configureSplitter();
 
         final SpeechConfig config = SpeechConfig.fromSubscription(subscriptionKey, serviceRegion);
         config.setSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3);
@@ -100,6 +103,12 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
         }
 
         return 0;
+    }
+
+    private ContentSplitter configureSplitter() {
+        return ContentSplitter.builder()
+            .withMaxPartCharacters(maxPartCharacters)
+            .build();
     }
 
     private void validateCommandLineParameters() {
