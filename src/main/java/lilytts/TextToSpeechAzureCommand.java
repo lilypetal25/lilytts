@@ -99,7 +99,7 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
                     }
 
                     // Stop execution.
-                    break;
+                    throw new Exception("Encountered a synthesis failure.");
                 } else {
                     throw new Exception("Unexpected result reason: " + result.getReason());
                 }
