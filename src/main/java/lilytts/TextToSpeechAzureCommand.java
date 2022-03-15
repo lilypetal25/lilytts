@@ -47,6 +47,9 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--maxPartCharacters" })
     private int maxPartCharacters = 7500;
 
+    @Option(names = { "--skipExistingFiles" })
+    private boolean skipExistingFiles = false;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -75,6 +78,11 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
                     removeFileExtension(inputFile.getName()) + ".mp3";
                 final File outputFile = new File(outputDirectory, outputFileName);
 
+                if (this.skipExistingFiles && outputFile.exists()) {
+                    System.out.printf("Skipping file '%s' because it already exists.\n", outputFile.getName());
+                    continue;
+                }
+
                 final StringWriter ssmlStringWriter = new StringWriter();
 
                 ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
@@ -91,6 +99,7 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
                     System.out.println("Audio was saved to " + outputFile.getAbsolutePath());
                 } else if (result.getReason() == ResultReason.Canceled) {
                     SpeechSynthesisCancellationDetails cancellation = SpeechSynthesisCancellationDetails.fromResult(result);
+                    System.out.println("Failed to convert " + outputFile.getName());
                     System.out.println("CANCELED: Reason=" + cancellation.getReason());
 
                     if (cancellation.getReason() == CancellationReason.Error) {
