@@ -98,6 +98,14 @@ public class SSMLWriter {
 
     private void writeSectionBreak(XMLStreamWriter out, SectionBreakContent item) throws XMLStreamException {
         writeBreak(out, "2s");
+
+        if (!item.getSectionTitle().isBlank()) {
+            out.writeStartElement("p");
+            out.writeCharacters(item.getSectionTitle());
+            out.writeEndElement();
+
+            writeBreak(out, "1s");
+        }
     }
 
     private void writeChapterEnd(XMLStreamWriter out, ChapterEndContent item) throws XMLStreamException {

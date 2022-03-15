@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lilytts.content.ChapterEndContent;
@@ -15,7 +16,7 @@ import lilytts.content.SectionBreakContent;
 import lilytts.parsing.ContentParser;
 
 public class TextContentParser implements ContentParser {
-    private static final Pattern SECTION_BREAK_PATTERN = Pattern.compile("^-{3,}$");
+    private static final Pattern SECTION_BREAK_PATTERN = Pattern.compile("-{3,}((?<title>[^-]+)-{3,})?");
 
     public static class Builder {
         private boolean recognizeChapter = true;
@@ -71,21 +72,24 @@ public class TextContentParser implements ContentParser {
 
         ArrayList<ContentItem> results = new ArrayList<>();
 
-        String nextLine = readNextBlock(reader);
+        String nextBlock = readNextBlock(reader);
 
-        if (this.recognizeChapter && nextLine != null) {
-            results.add(new ChapterTitleContent(nextLine));
-            nextLine = readNextBlock(reader);
+        if (this.recognizeChapter && nextBlock != null) {
+            results.add(new ChapterTitleContent(nextBlock));
+            nextBlock = readNextBlock(reader);
         }
 
-        while (nextLine != null) {
-            if (this.recognizeSectionBreaks && isSectionBreak(nextLine)) {
-                results.add(new SectionBreakContent());
-            } else {
-                results.add(new ParagraphContent(nextLine));
-            }
+        while (nextBlock != null) {
+            final Matcher sectionBreakMatcher = SECTION_BREAK_PATTERN.matcher(nextBlock);
 
-            nextLine = readNextBlock(reader);
+            if (this.recognizeSectionBreaks && sectionBreakMatcher.matches()) {
+                final String sectionTitle = toNonNullString(sectionBreakMatcher.group("title")).trim();
+                results.add(new SectionBreakContent(sectionTitle));
+            } else {
+                results.add(new ParagraphContent(nextBlock));
+            }
+            
+            nextBlock = readNextBlock(reader);
         }
 
         if (this.appendChapterEnd) {
@@ -118,7 +122,7 @@ public class TextContentParser implements ContentParser {
         return result.length() > 0 ? result.toString() : null;
     }
 
-    private static boolean isSectionBreak(String line) {
-        return SECTION_BREAK_PATTERN.matcher(line).find();
+    private static String toNonNullString(String input) {
+        return input != null ? input : "";
     }
 }
