@@ -3,6 +3,7 @@ package lilytts.synthesis;
 public enum AzureVoice {
     Aria("en-US-AriaNeural"),
     Christopher("en-US-ChristopherNeural"),
+    Cora("en-US-CoraNeural"),
     Jenny("en-US-JennyNeural"),
     Sara("en-US-SaraNeural");
 
