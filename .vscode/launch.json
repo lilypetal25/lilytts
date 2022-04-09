@@ -16,7 +16,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "text-to-speech-azure @/Users/brad/Downloads/azure-argfile.txt"
+            "args": "text-to-speech-azure @/Users/brad/Downloads/azure-argfile.args"
         },
         {
             "type": "java",
@@ -24,7 +24,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "text-to-ssml @/Users/brad/Downloads/ssml-argfile.txt"
+            "args": "text-to-ssml @/Users/brad/Downloads/ssml-argfile.args"
         }
     ]
 }
