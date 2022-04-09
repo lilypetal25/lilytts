@@ -25,6 +25,14 @@
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
             "args": "text-to-ssml @/Users/brad/Downloads/ssml-argfile.args"
+        },
+        {
+            "type": "java",
+            "name": "Launch Merge Lines",
+            "request": "launch",
+            "mainClass": "lilytts.App",
+            "projectName": "lilytts",
+            "args": "merge-lines @/Users/brad/Downloads/merge-lines-argfile.args"
         }
     ]
 }

@@ -36,19 +36,22 @@ public class MergeLinesCommand implements Callable<Integer> {
                     nextLine = reader.readLine();
                 }
 
+                boolean firstLine = true;
+
                 while (nextLine != null && !nextLine.isBlank()) {
                     // Separate lines by a space.
-                    if (result.length() > 0) {
+                    if (!firstLine) {
                         result.append(' ');
                     }
 
                     result.append(nextLine.trim());
                     nextLine = reader.readLine();
+                    firstLine = false;
                 }
             }
 
             reader.close();
-            
+
             BufferedWriter out = new BufferedWriter(new FileWriter(textFile));
 
             out.write(result.toString());
