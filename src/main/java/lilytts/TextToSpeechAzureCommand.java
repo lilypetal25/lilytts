@@ -78,7 +78,7 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
                     removeFileExtension(inputFile.getName()) + ".mp3";
                 final File outputFile = new File(outputDirectory, outputFileName);
 
-                if (this.skipExistingFiles && outputFile.exists()) {
+                if (this.skipExistingFiles && outputFile.exists() && outputFile.length() > 0) {
                     System.out.printf("Skipping file '%s' because it already exists.\n", outputFile.getName());
                     continue;
                 }
