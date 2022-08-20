@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -23,6 +24,7 @@ import lilytts.parsing.text.TextContentParser;
 import lilytts.processing.ContentSplitter;
 import lilytts.ssml.SSMLWriter;
 import lilytts.synthesis.AzureVoice;
+import lilytts.synthesis.AzureVoiceStyle;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -50,12 +52,18 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--skipExistingFiles" })
     private boolean skipExistingFiles = false;
 
+    @Option(names = { "--voiceStyle" })
+    private AzureVoiceStyle voiceStyle = AzureVoiceStyle.General;
+
+    @Option(names = { "--prosodyRate" })
+    private int prosodyRate = 0;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
 
         final ContentParser contentParser = TextContentParser.builder().build();
-        final SSMLWriter ssmlWriter = SSMLWriter.builder().withVoice(voice.getVoiceName()).build();
+        final SSMLWriter ssmlWriter = configureSsmlWriter();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
         final ContentSplitter splitter = configureSplitter();
 
@@ -116,6 +124,19 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
         }
 
         return 0;
+    }
+
+    private SSMLWriter configureSsmlWriter() {
+        SSMLWriter.Builder builder = SSMLWriter.builder()
+            .withVoice(voice.getVoiceName())
+            .withVoiceStyle(this.voiceStyle.getStyleIdentifier());
+        
+        // TODO: Does this handle negative numbers?
+        if (this.prosodyRate != 0) {
+            builder = builder.withProsodyRate(String.format(Locale.ENGLISH, "%d%%", this.prosodyRate));
+        }
+        
+        return builder.build();
     }
 
     private ContentSplitter configureSplitter() {

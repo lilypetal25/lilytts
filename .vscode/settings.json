@@ -2,6 +2,7 @@
     "java.configuration.updateBuildConfiguration": "automatic",
     "maven.view": "flat",
     "cSpell.words": [
+        "lilytts",
         "Ssml"
     ]
 }

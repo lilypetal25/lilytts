@@ -16,7 +16,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "text-to-speech-azure @/Users/brad/Downloads/azure-argfile.args"
+            "args": "text-to-speech-azure @/Users/lily/Downloads/azure-argfile.args"
         },
         {
             "type": "java",
@@ -24,7 +24,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "text-to-ssml @/Users/brad/Downloads/ssml-argfile.args"
+            "args": "text-to-ssml @/Users/lily/Downloads/ssml-argfile.args"
         },
         {
             "type": "java",
@@ -32,7 +32,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "merge-lines @/Users/brad/Downloads/merge-lines-argfile.args"
+            "args": "merge-lines @/Users/lily/Downloads/merge-lines-argfile.args"
         }
     ]
 }

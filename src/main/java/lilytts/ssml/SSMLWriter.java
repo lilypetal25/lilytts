@@ -15,6 +15,8 @@ public class SSMLWriter {
     public static class Builder {
         private boolean writeVoiceElement = false;
         private String voiceName = null;
+        private String voiceStyle = null;
+        private String prosodyRate = null;
 
         public Builder withVoice(String voiceName) {
             this.writeVoiceElement = true;
@@ -22,8 +24,18 @@ public class SSMLWriter {
             return this;
         }
 
+        public Builder withVoiceStyle(String voiceStyle) {
+            this.voiceStyle = voiceStyle;
+            return this;
+        }
+
+        public Builder withProsodyRate(String prosodyRate) {
+            this.prosodyRate = prosodyRate;
+            return this;
+        }
+
         public SSMLWriter build() {
-            return new SSMLWriter(writeVoiceElement, voiceName);
+            return new SSMLWriter(writeVoiceElement, voiceName, voiceStyle, prosodyRate);
         }
     }
 
@@ -33,23 +45,46 @@ public class SSMLWriter {
 
     private final boolean writeVoiceElement;
     private final String voiceName;
+    private final String voiceStyle;
+    private final String prosodyRate;
 
-    private SSMLWriter(final boolean writeVoiceElement, final String voiceName) {
+    private SSMLWriter(
+        final boolean writeVoiceElement,
+        final String voiceName,
+        final String voiceStyle,
+        final String prosodyRate) {
         this.writeVoiceElement = writeVoiceElement;
         this.voiceName = voiceName;
+        this.voiceStyle = voiceStyle;
+        this.prosodyRate = prosodyRate;
     }
 
     public void writeSSML(Iterable<ContentItem> content, XMLStreamWriter out) throws SSMLWritingException {
         try {
+            // TODO: Isn't there a helper method somewhere which can check if a string is null or empty?
+            final boolean writeStyleElement = this.voiceStyle != null && !this.voiceStyle.isEmpty();
+            final boolean writeProsodyElement = this.prosodyRate != null && !this.prosodyRate.isEmpty();
+
             out.writeStartDocument();
             out.writeStartElement("speak");
             out.writeAttribute("version", "1.0");
             out.writeDefaultNamespace("http://www.w3.org/2001/10/synthesis");
+            out.writeNamespace("mstts", "http://www.w3.org/2001/mstts");
             out.writeAttribute("xml", W3C_XML_SCHEMA_NS_URI, "lang", "en-US");
             
             if (this.writeVoiceElement) {
                 out.writeStartElement("voice");
                 out.writeAttribute("name", this.voiceName);
+            }
+
+            if (writeStyleElement) {
+                out.writeStartElement("http://www.w3.org/2001/mstts", "express-as");
+                out.writeAttribute("style", this.voiceStyle);
+            }
+
+            if (writeProsodyElement) {
+                out.writeStartElement("prosody");
+                out.writeAttribute("rate", this.prosodyRate);
             }
 
             // TODO: This would be better as a visitor pattern.
@@ -65,6 +100,10 @@ public class SSMLWriter {
                 } else {
                     throw new IllegalArgumentException("Unknown content item type: " + item.getClass().getSimpleName());
                 }
+            }
+
+            if (writeStyleElement) {
+                out.writeEndElement();
             }
 
             if (this.writeVoiceElement) {
