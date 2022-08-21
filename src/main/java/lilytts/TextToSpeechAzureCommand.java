@@ -9,20 +9,12 @@ import java.util.concurrent.Callable;
 
 import javax.xml.stream.XMLOutputFactory;
 
-import com.microsoft.cognitiveservices.speech.CancellationReason;
-import com.microsoft.cognitiveservices.speech.ResultReason;
-import com.microsoft.cognitiveservices.speech.SpeechConfig;
-import com.microsoft.cognitiveservices.speech.SpeechSynthesisCancellationDetails;
-import com.microsoft.cognitiveservices.speech.SpeechSynthesisOutputFormat;
-import com.microsoft.cognitiveservices.speech.SpeechSynthesisResult;
-import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
-import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
-
 import lilytts.content.ContentItem;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
 import lilytts.processing.ContentSplitter;
 import lilytts.ssml.SSMLWriter;
+import lilytts.synthesis.AzureSynthesizer;
 import lilytts.synthesis.AzureVoice;
 import lilytts.synthesis.AzureVoiceStyle;
 import picocli.CommandLine.Command;
@@ -66,9 +58,7 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
         final ContentSplitter splitter = configureSplitter();
-
-        final SpeechConfig config = SpeechConfig.fromSubscription(subscriptionKey, serviceRegion);
-        config.setSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3);
+        final AzureSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
         for (File inputFile : inputFiles) {
             final FileReader inputStream = new FileReader(inputFile);
@@ -92,34 +82,8 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
                 }
 
                 final StringWriter ssmlStringWriter = new StringWriter();
-
                 ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
-
-                final AudioConfig fileOutput = AudioConfig.fromWavFileOutput(outputFile.getAbsolutePath());
-                final SpeechSynthesisResult result;
-
-                try (SpeechSynthesizer synthesizer = new SpeechSynthesizer(config, fileOutput)) {
-                    result = synthesizer.SpeakSsml(ssmlStringWriter.toString());
-                }
-
-                // Checks result.
-                if (result.getReason() == ResultReason.SynthesizingAudioCompleted) {
-                    System.out.println("Audio was saved to " + outputFile.getAbsolutePath());
-                } else if (result.getReason() == ResultReason.Canceled) {
-                    SpeechSynthesisCancellationDetails cancellation = SpeechSynthesisCancellationDetails.fromResult(result);
-                    System.out.println("Failed to convert " + outputFile.getName());
-                    System.out.println("CANCELED: Reason=" + cancellation.getReason());
-
-                    if (cancellation.getReason() == CancellationReason.Error) {
-                        System.out.println("CANCELED: ErrorCode=" + cancellation.getErrorCode());
-                        System.out.println("CANCELED: ErrorDetails=" + cancellation.getErrorDetails());
-                    }
-
-                    // Stop execution.
-                    throw new Exception("Encountered a synthesis failure.");
-                } else {
-                    throw new Exception("Unexpected result reason: " + result.getReason());
-                }
+                synthesizer.synthesizeSsmlToFile(outputFile.getAbsolutePath(), ssmlStringWriter.toString());
             }
         }
 
