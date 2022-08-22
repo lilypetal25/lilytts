@@ -14,6 +14,7 @@ import java.util.concurrent.Callable;
 import javax.xml.stream.XMLOutputFactory;
 
 import com.mpatric.mp3agic.ID3v1Tag;
+import com.mpatric.mp3agic.ID3v24Tag;
 import com.mpatric.mp3agic.Mp3File;
 
 import lilytts.content.ChapterTitleContent;
@@ -100,15 +101,16 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                     ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
                     synthesizer.synthesizeSsmlToFile(tempOutputFile.getAbsolutePath(), ssmlStringWriter.toString());
 
-                    final ID3v1Tag metadata = new ID3v1Tag();
+                    final ID3v24Tag metadata = new ID3v24Tag();
                     metadata.setArtist(publisherName);
+                    metadata.setAlbumArtist("News Deep Dive");
                     metadata.setAlbum(albumName);
                     metadata.setTitle(articleName);
                     metadata.setTrack(Integer.toString(currentTrackNumber));
 
                     Files.copy(tempOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     final Mp3File mp3File = new Mp3File(tempOutputFile.getAbsolutePath());
-                    mp3File.setId3v1Tag(metadata);
+                    mp3File.setId3v2Tag(metadata);
                     mp3File.save(outputFile.getAbsolutePath());
                 }
             }
