@@ -33,6 +33,14 @@
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
             "args": "merge-lines @/Users/lily/Downloads/merge-lines-argfile.args"
+        },
+        {
+            "type": "java",
+            "name": "Launch News text to speech",
+            "request": "launch",
+            "mainClass": "lilytts.App",
+            "projectName": "lilytts",
+            "args": "news-to-speech-azure @/Users/lily/Downloads/Articles/arguments.args"
         }
     ]
 }
