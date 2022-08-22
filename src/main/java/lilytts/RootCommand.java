@@ -7,7 +7,8 @@ import picocli.CommandLine.Command;
 @Command(mixinStandardHelpOptions = true, subcommands = {
     TextToSsmlCommand.class,
     TextToSpeechAzureCommand.class,
-    MergeLinesCommand.class
+    MergeLinesCommand.class,
+    NewsToSpeechAzureCommand.class
 })
 public class RootCommand implements Callable<Integer> {
     @Override
