@@ -112,6 +112,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                     final Mp3File mp3File = new Mp3File(tempOutputFile.getAbsolutePath());
                     mp3File.setId3v2Tag(metadata);
                     mp3File.save(outputFile.getAbsolutePath());
+
+                    currentTrackNumber++;
                 }
             }
         }
