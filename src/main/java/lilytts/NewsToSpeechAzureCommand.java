@@ -64,7 +64,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     private String serviceRegion;
 
     @Option(names = { "--voice" })
-    private AzureNewsVoice voice = AzureNewsVoice.AriaFormal;
+    private AzureNewsVoice voice = AzureNewsVoice.AriaCasual;
 
     @Option(names = { "--prosodyRate" })
     private int prosodyRate = 10;
