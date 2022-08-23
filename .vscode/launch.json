@@ -40,7 +40,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "news-to-speech-azure @/Users/lily/Downloads/Articles/arguments.args"
+            "args": "news-to-speech-azure @/Users/lily/Documents/Articles/arguments.args"
         }
     ]
 }
