@@ -103,6 +103,10 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 final File outputFile = new File(outputDirectory, outputFileName);
                 final File tempOutputFile = new File(outputDirectory,
                         removeFileExtension(outputFileName) + "_temp.mp3");
+                
+                final String title = parts.size() > 1
+                    ? article.title + " (Part " + (i + 1) + ")"
+                    : article.title;
 
                 tempOutputFile.deleteOnExit();
 
@@ -119,7 +123,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 metadata.setArtist(article.publisher);
                 metadata.setAlbumArtist("News Deep Dive");
                 metadata.setAlbum(albumName);
-                metadata.setTitle(article.title);
+                metadata.setTitle(title);
                 metadata.setTrack(Integer.toString(currentTrackNumber));
 
                 Files.copy(tempOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
