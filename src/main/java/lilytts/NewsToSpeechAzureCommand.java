@@ -101,8 +101,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                         ? article.fileName + " (Part " + (i + 1) + ").mp3"
                         : article.fileName + ".mp3";
                 final File outputFile = new File(outputDirectory, outputFileName);
-                final File tempOutputFile = new File(outputDirectory,
-                        removeFileExtension(outputFileName) + "_temp.mp3");
+
+                final File tempOutputFile = File.createTempFile(article.fileName, ".mp3");
                 
                 final String title = parts.size() > 1
                     ? article.title + " (Part " + (i + 1) + ")"
