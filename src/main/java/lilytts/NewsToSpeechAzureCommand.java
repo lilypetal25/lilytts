@@ -79,8 +79,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
         final AzureSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
-        final String currentDateString = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        final String albumName = currentDateString + " News Deep Dive";
+        final String albumName = new SimpleDateFormat("EEEE, MMMM d YYYY").format(new Date());
 
         int currentTrackNumber = 1;
 
