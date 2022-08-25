@@ -69,6 +69,12 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--prosodyRate" })
     private int prosodyRate = 10;
 
+    @Option(names = { "--albumName" })
+    private String albumName = null;
+
+    @Option(names = { "--date" })
+    private Date date = null;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -79,20 +85,26 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
         final AzureSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
-        final String albumName = new SimpleDateFormat("EEEE, MMMM d YYYY").format(new Date());
+        if (isNullOrEmpty(albumName)) {
+            albumName = new SimpleDateFormat("EEEE, MMMM d YYYY").format(date != null ? date : new Date());
+        }
 
         int currentTrackNumber = 1;
 
         List<Article> articles = fetchArticles(contentParser, splitter);
+
+        System.out.printf("Input directory: %s%n", this.inputDirectory.getPath());
+        System.out.printf("Output directory: %s%n", this.outputDirectory.getPath());
+        System.out.printf("Found %d articles to convert.%n", articles.size(), articles.size());
 
         Collections.sort(articles, (x, y) -> x.savedDate.compareTo(y.savedDate));
 
         for (Article article : articles) {
             final List<List<ContentItem>> parts = splitter.splitContent(article.content);
 
-            System.out.printf("Converting article '%s' to speech as %s part(s).\n",
-                    article.title,
-                    parts.size());
+            System.out.printf("Converting article to speech as %s part(s): %s%n",
+                    parts.size(),
+                    article.title);
 
             // TODO: Share this code with TextToSpeechAzureCommand.
             for (int i = 0; i < parts.size(); i++) {
@@ -110,7 +122,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 tempOutputFile.deleteOnExit();
 
                 if (outputFile.exists() && outputFile.length() > 0) {
-                    System.out.printf("Skipping file '%s' because it already exists.\n", outputFile.getName());
+                    System.out.printf("Skipping file because it already exists:%s%n", outputFile.getName());
                     continue;
                 }
 
@@ -129,6 +141,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 final Mp3File mp3File = new Mp3File(tempOutputFile.getAbsolutePath());
                 mp3File.setId3v2Tag(metadata);
                 mp3File.save(outputFile.getAbsolutePath());
+
+                System.out.printf("Saved audio to file: %s%n", outputFile.getPath());
 
                 currentTrackNumber++;
             }
