@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
@@ -38,13 +39,15 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         // TODO: Encapsulate these with getters.
         private final String title;
         private final String fileName;
+        private final File sourceFile;
         private final String publisher;
         private final FileTime savedDate;
         private final List<ContentItem> content;
 
-        public Article(String title, String fileName, String publisher, FileTime savedDate, List<ContentItem> content) {
+        public Article(String title, String fileName, File sourceFile, String publisher, FileTime savedDate, List<ContentItem> content) {
             this.title = title;
             this.fileName = fileName;
+            this.sourceFile = sourceFile;
             this.publisher = publisher;
             this.savedDate = savedDate;
             this.content = content;
@@ -73,7 +76,10 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     private String albumName = null;
 
     @Option(names = { "--date" })
-    private Date date = null;
+    private Date date = new Date();
+
+    @Option(names = { "--archive" })
+    private File archiveDirectory = null;
 
     @Override
     public Integer call() throws Exception {
@@ -86,10 +92,10 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final AzureSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
         if (isNullOrEmpty(albumName)) {
-            albumName = new SimpleDateFormat("EEEE, MMMM d YYYY").format(date != null ? date : new Date());
+            albumName = new SimpleDateFormat("EEEE, MMMM d YYYY").format(this.date);
         }
 
-        int currentTrackNumber = 1;
+        int currentTrackNumber = 0;
 
         List<Article> articles = fetchArticles(contentParser, splitter);
 
@@ -104,27 +110,28 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
             System.out.printf("Converting article to speech as %s part(s): %s%n",
                     parts.size(),
-                    article.title);
+                    article.sourceFile.getName());
 
             // TODO: Share this code with TextToSpeechAzureCommand.
             for (int i = 0; i < parts.size(); i++) {
+                currentTrackNumber++;
+
                 final String outputFileName = parts.size() > 1
                         ? article.fileName + " (Part " + (i + 1) + ").mp3"
                         : article.fileName + ".mp3";
                 final File outputFile = new File(outputDirectory, outputFileName);
 
-                final File tempOutputFile = File.createTempFile(article.fileName, ".mp3");
-                
                 final String title = parts.size() > 1
-                    ? article.title + " (Part " + (i + 1) + ")"
-                    : article.title;
-
-                tempOutputFile.deleteOnExit();
+                ? article.title + " (Part " + (i + 1) + ")"
+                : article.title;
 
                 if (outputFile.exists() && outputFile.length() > 0) {
                     System.out.printf("Skipping file because it already exists:%s%n", outputFile.getName());
                     continue;
                 }
+
+                final File tempOutputFile = File.createTempFile(article.fileName, ".mp3");
+                tempOutputFile.deleteOnExit();
 
                 final StringWriter ssmlStringWriter = new StringWriter();
                 ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
@@ -143,9 +150,31 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 mp3File.save(outputFile.getAbsolutePath());
 
                 System.out.printf("Saved audio to file: %s%n", outputFile.getPath());
-
-                currentTrackNumber++;
             }
+        }
+
+        if (this.archiveDirectory == null) {
+            return 0;
+        }
+
+        System.out.printf("Archiving articles to folder: %s%n", this.archiveDirectory.getPath());
+        final String archiveDateFolderName = new SimpleDateFormat("YYYY-dd-MM").format(this.date);
+        
+        for (Article article : articles) {
+            Path articleRelativePath = this.inputDirectory.toPath().relativize(article.sourceFile.toPath());
+
+            Path articleArchiveTargetPath = this.archiveDirectory
+                .toPath()
+                .resolve(archiveDateFolderName)
+                .resolve(articleRelativePath);
+            
+            File articleTargetFolder = articleArchiveTargetPath.getParent().toFile();
+
+            if (!articleTargetFolder.exists() && !articleTargetFolder.mkdirs()) {
+                throw new Exception("Unable to create directory: " + articleTargetFolder.getPath());
+            }
+
+            Files.move(article.sourceFile.toPath(), articleArchiveTargetPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
         return 0;
@@ -210,7 +239,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                         .findFirst()
                         .orElseGet(() -> removeFileExtension(articleTextFile.getName()));
 
-                articles.add(new Article(articleName, fileName, publisherName, savedDate, content));
+                articles.add(new Article(articleName, fileName, articleTextFile, publisherName, savedDate, content));
             }
         }
 
