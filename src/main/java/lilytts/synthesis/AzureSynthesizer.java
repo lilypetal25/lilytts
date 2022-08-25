@@ -33,7 +33,7 @@ public class AzureSynthesizer {
 
         // Checks result.
         if (result.getReason() == ResultReason.SynthesizingAudioCompleted) {
-            System.out.println("Audio was saved to " + filePath);
+            return;
         } else if (result.getReason() == ResultReason.Canceled) {
             SpeechSynthesisCancellationDetails cancellation = SpeechSynthesisCancellationDetails.fromResult(result);
             System.out.println("Failed to convert " + filePath);
