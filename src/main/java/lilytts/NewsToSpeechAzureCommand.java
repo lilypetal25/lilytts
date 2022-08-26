@@ -126,7 +126,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 : article.title;
 
                 if (outputFile.exists() && outputFile.length() > 0) {
-                    System.out.printf("Skipping file because it already exists:%s%n", outputFile.getName());
+                    System.out.printf("  => Skipping file because it already exists:%s%n", outputFile.getName());
                     continue;
                 }
 
@@ -149,7 +149,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 mp3File.setId3v2Tag(metadata);
                 mp3File.save(outputFile.getAbsolutePath());
 
-                System.out.printf("Saved audio to file: %s%n", outputFile.getPath());
+                System.out.printf("  => Saved audio to file: %s%n", outputFile.getPath());
             }
         }
 
