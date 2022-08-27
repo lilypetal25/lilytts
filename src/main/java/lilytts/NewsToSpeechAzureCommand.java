@@ -177,15 +177,15 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         return 0;
     }
 
-    private String findAvailableAlbumName(boolean resume) {
-        for (int i = 0; i < 5; i++) {
-            final String potentialAlbumName =
-        }
-    }
+    // private String findAvailableAlbumName(boolean resume) {
+    //     for (int i = 0; i < 5; i++) {
+    //         final String potentialAlbumName =
+    //     }
+    // }
 
-    private static String getAlbumTargetFolder(Date date, int updateNumber) {
+    // private static String getAlbumTargetFolder(Date date, int updateNumber) {
 
-    }
+    // }
 
     private static String formatAlbumName(Date date, int updateNumber) {
         final String dateString = new SimpleDateFormat("EEEE, MMMM d YYYY").format(date);
