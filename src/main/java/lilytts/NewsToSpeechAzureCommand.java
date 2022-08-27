@@ -72,9 +72,6 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--prosodyRate" })
     private int prosodyRate = 10;
 
-    @Option(names = { "--albumName" })
-    private String albumName = null;
-
     @Option(names = { "--date" })
     private Date date = new Date();
 
@@ -91,10 +88,6 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
         final AzureSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
-        if (isNullOrEmpty(albumName)) {
-            albumName = new SimpleDateFormat("EEEE, MMMM d YYYY").format(this.date);
-        }
-
         int currentTrackNumber = 0;
 
         List<Article> articles = fetchArticles(contentParser, splitter);
@@ -102,6 +95,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         System.out.printf("Input directory: %s%n", this.inputDirectory.getPath());
         System.out.printf("Output directory: %s%n", this.outputDirectory.getPath());
         System.out.printf("Found %d articles to convert.%n", articles.size(), articles.size());
+
+        String albumName = new SimpleDateFormat("EEEE, MMMM d YYYY").format(this.date);
 
         Collections.sort(articles, (x, y) -> x.savedDate.compareTo(y.savedDate));
 
@@ -149,7 +144,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 mp3File.setId3v2Tag(metadata);
                 mp3File.save(outputFile.getAbsolutePath());
 
-                System.out.printf("  => Saved audio to file: %s%n", outputFile.getPath());
+                System.out.printf("  => Saved audio to file: %s%n", outputFile.getName());
             }
         }
 
@@ -178,6 +173,26 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         }
 
         return 0;
+    }
+
+    private String findAvailableAlbumName(boolean resume) {
+        for (int i = 0; i < 5; i++) {
+            final String potentialAlbumName =
+        }
+    }
+
+    private static String getAlbumTargetFolder(Date date, int updateNumber) {
+
+    }
+
+    private static String formatAlbumName(Date date, int updateNumber) {
+        final String dateString = new SimpleDateFormat("EEEE, MMMM d YYYY").format(date);
+
+        if (updateNumber < 1) {
+            return dateString;
+        }
+
+        return String.format(Locale.ENGLISH, "%s (Update %d)", dateString, updateNumber);
     }
 
     private void validateCommandLineParameters() {
