@@ -103,9 +103,11 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         for (Article article : articles) {
             final List<List<ContentItem>> parts = splitter.splitContent(article.content);
 
-            System.out.printf("Converting article to speech as %s part(s): %s%n",
-                    parts.size(),
-                    article.sourceFile.getName());
+            System.out.printf("Converting article %d of %d to speech as %s part(s): %s%n",
+                currentTrackNumber,
+                articles.size(),
+                parts.size(),
+                article.sourceFile.getName());
 
             // TODO: Share this code with TextToSpeechAzureCommand.
             for (int i = 0; i < parts.size(); i++) {
