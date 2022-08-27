@@ -78,6 +78,9 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--archive" })
     private File archiveDirectory = null;
 
+    @Option(names = { "--resume" })
+    private boolean resume = false;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -91,10 +94,14 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         int currentTrackNumber = 0;
 
         final List<Article> articles = fetchArticles(contentParser, splitter);
-        final File albumTargetFolder = findAvailableAlbumTargetFolder();
+        final File albumTargetFolder = this.resume ? findAlbumTargetFolderToResume() : findAvailableAlbumTargetFolder();
         final String albumName = albumTargetFolder.getName();
 
-        System.out.printf("Album name: %s", albumName);
+        if (this.resume) {
+            System.out.printf("Resuming processing of last album.%n");
+        }
+
+        System.out.printf("Album name: %s%n", albumName);
         System.out.printf("Input directory: %s%n", this.inputDirectory.getPath());
         System.out.printf("Output directory: %s%n", albumTargetFolder.getPath());
         System.out.printf("Found %d articles to convert.%n", articles.size(), articles.size());
@@ -178,9 +185,28 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         return 0;
     }
 
+    private File findAlbumTargetFolderToResume() {
+        File targetFolder = getAlbumTargetFolder(0);
+        int nextUpdateNumber = 1;
+
+        if (!targetFolder.exists()) {
+            throw new RuntimeException(String.format("Couldn't find an album to resume. Folder does not exist: %s", targetFolder.toString()));
+        }
+
+        File nextTargetFolder = getAlbumTargetFolder(nextUpdateNumber);
+
+        while (nextTargetFolder.exists()) {
+            targetFolder = nextTargetFolder;
+            nextUpdateNumber++;
+            nextTargetFolder = getAlbumTargetFolder(nextUpdateNumber);
+        }
+
+        return targetFolder;
+    }
+
     private File findAvailableAlbumTargetFolder() {
         for (int updateNumber = 0; updateNumber < 5; updateNumber++) {
-            final File targetFolder = new File(this.outputDirectory, formatAlbumName(updateNumber));
+            final File targetFolder = getAlbumTargetFolder(updateNumber);
 
             if (!targetFolder.exists()) {
                 return targetFolder;
@@ -189,6 +215,10 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
         // TODO: Use a more specific exception type here.
         throw new RuntimeException(String.format("All the album names for this date have been taken: %s", formatDateForAlbumName(date)));
+    }
+
+    private File getAlbumTargetFolder(int updateNumber) {
+        return new File(this.outputDirectory, formatAlbumName(updateNumber));
     }
 
     private String formatAlbumName(int updateNumber) {
