@@ -106,13 +106,17 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         System.out.printf("Output directory: %s%n", albumTargetFolder.getPath());
         System.out.printf("Found %d articles to convert.%n", articles.size(), articles.size());
 
+        if (!albumTargetFolder.exists() && !albumTargetFolder.mkdirs()) {
+            throw new Exception("Unable to create directory: " + albumTargetFolder.getPath());
+        }
+
         Collections.sort(articles, (x, y) -> x.savedDate.compareTo(y.savedDate));
 
         for (Article article : articles) {
             final List<List<ContentItem>> parts = splitter.splitContent(article.content);
 
             System.out.printf("Converting article %d of %d to speech as %s part(s): %s%n",
-                currentTrackNumber,
+                articles.indexOf(article) + 1,
                 articles.size(),
                 parts.size(),
                 article.sourceFile.getName());
@@ -182,6 +186,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
             Files.move(article.sourceFile.toPath(), articleArchiveTargetPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
+        System.out.println("Done!");
         return 0;
     }
 
