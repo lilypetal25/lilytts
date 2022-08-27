@@ -90,13 +90,14 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
         int currentTrackNumber = 0;
 
-        List<Article> articles = fetchArticles(contentParser, splitter);
+        final List<Article> articles = fetchArticles(contentParser, splitter);
+        final File albumTargetFolder = findAvailableAlbumTargetFolder();
+        final String albumName = albumTargetFolder.getName();
 
+        System.out.printf("Album name: %s", albumName);
         System.out.printf("Input directory: %s%n", this.inputDirectory.getPath());
-        System.out.printf("Output directory: %s%n", this.outputDirectory.getPath());
+        System.out.printf("Output directory: %s%n", albumTargetFolder.getPath());
         System.out.printf("Found %d articles to convert.%n", articles.size(), articles.size());
-
-        String albumName = new SimpleDateFormat("EEEE, MMMM d YYYY").format(this.date);
 
         Collections.sort(articles, (x, y) -> x.savedDate.compareTo(y.savedDate));
 
@@ -116,7 +117,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 final String outputFileName = parts.size() > 1
                         ? article.fileName + " (Part " + (i + 1) + ").mp3"
                         : article.fileName + ".mp3";
-                final File outputFile = new File(outputDirectory, outputFileName);
+                final File outputFile = new File(albumTargetFolder, outputFileName);
 
                 final String title = parts.size() > 1
                 ? article.title + " (Part " + (i + 1) + ")"
@@ -177,24 +178,29 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         return 0;
     }
 
-    // private String findAvailableAlbumName(boolean resume) {
-    //     for (int i = 0; i < 5; i++) {
-    //         final String potentialAlbumName =
-    //     }
-    // }
+    private File findAvailableAlbumTargetFolder() {
+        for (int updateNumber = 0; updateNumber < 5; updateNumber++) {
+            final File targetFolder = new File(this.outputDirectory, formatAlbumName(updateNumber));
 
-    // private static String getAlbumTargetFolder(Date date, int updateNumber) {
-
-    // }
-
-    private static String formatAlbumName(Date date, int updateNumber) {
-        final String dateString = new SimpleDateFormat("EEEE, MMMM d YYYY").format(date);
-
-        if (updateNumber < 1) {
-            return dateString;
+            if (!targetFolder.exists()) {
+                return targetFolder;
+            }
         }
 
-        return String.format(Locale.ENGLISH, "%s (Update %d)", dateString, updateNumber);
+        // TODO: Use a more specific exception type here.
+        throw new RuntimeException(String.format("All the album names for this date have been taken: %s", formatDateForAlbumName(date)));
+    }
+
+    private String formatAlbumName(int updateNumber) {
+        if (updateNumber < 1) {
+            return formatDateForAlbumName(date);
+        }
+
+        return String.format(Locale.ENGLISH, "%s (Update %d)", formatDateForAlbumName(date), updateNumber);
+    }
+
+    private static String formatDateForAlbumName(Date date) {
+        return new SimpleDateFormat("EEEE, MMMM d YYYY").format(date);
     }
 
     private void validateCommandLineParameters() {
