@@ -6,10 +6,9 @@ import com.microsoft.cognitiveservices.speech.SpeechConfig;
 import com.microsoft.cognitiveservices.speech.SpeechSynthesisCancellationDetails;
 import com.microsoft.cognitiveservices.speech.SpeechSynthesisOutputFormat;
 import com.microsoft.cognitiveservices.speech.SpeechSynthesisResult;
-import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
-public class AzureSynthesizer {
+public class AzureSynthesizer implements SpeechSynthesizer {
     private final SpeechConfig speechConfig;
 
     public static AzureSynthesizer fromSubscription(String subscriptionKey, String serviceRegion) {
@@ -23,11 +22,12 @@ public class AzureSynthesizer {
         this.speechConfig = speechConfig;
     }
 
-    public void synthesizeSsmlToFile(String filePath, String ssml) throws SpeechSynthesisException {
+    public void synthesizeSsmlToFile(String ssml, String filePath) throws SpeechSynthesisException {
         final AudioConfig fileOutput = AudioConfig.fromWavFileOutput(filePath);
         final SpeechSynthesisResult result;
 
-        try (SpeechSynthesizer synthesizer = new SpeechSynthesizer(this.speechConfig, fileOutput)) {
+        try (com.microsoft.cognitiveservices.speech.SpeechSynthesizer synthesizer =
+                new com.microsoft.cognitiveservices.speech.SpeechSynthesizer(this.speechConfig, fileOutput)) {
             result = synthesizer.SpeakSsml(ssml);
         }
 

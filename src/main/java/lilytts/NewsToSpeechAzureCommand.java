@@ -29,6 +29,7 @@ import lilytts.processing.ContentSplitter;
 import lilytts.ssml.SSMLWriter;
 import lilytts.synthesis.AzureNewsVoice;
 import lilytts.synthesis.AzureSynthesizer;
+import lilytts.synthesis.SpeechSynthesizer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -89,7 +90,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
-        final AzureSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
+        final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
         int currentTrackNumber = 0;
 
@@ -131,8 +132,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 final File outputFile = new File(albumTargetFolder, outputFileName);
 
                 final String title = parts.size() > 1
-                ? article.title + " (Part " + (i + 1) + ")"
-                : article.title;
+                    ? article.title + " (Part " + (i + 1) + ")"
+                    : article.title;
 
                 if (outputFile.exists() && outputFile.length() > 0) {
                     System.out.printf("  => Skipping file because it already exists:%s%n", outputFile.getName());
@@ -144,7 +145,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
                 final StringWriter ssmlStringWriter = new StringWriter();
                 ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
-                synthesizer.synthesizeSsmlToFile(tempOutputFile.getAbsolutePath(), ssmlStringWriter.toString());
+                synthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), tempOutputFile.getAbsolutePath());
 
                 final ID3v24Tag metadata = new ID3v24Tag();
                 metadata.setArtist(article.publisher);

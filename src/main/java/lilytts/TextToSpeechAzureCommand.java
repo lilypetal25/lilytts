@@ -17,6 +17,7 @@ import lilytts.ssml.SSMLWriter;
 import lilytts.synthesis.AzureSynthesizer;
 import lilytts.synthesis.AzureVoice;
 import lilytts.synthesis.AzureVoiceStyle;
+import lilytts.synthesis.SpeechSynthesizer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -58,7 +59,7 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
         final ContentSplitter splitter = configureSplitter();
-        final AzureSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
+        final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
         for (File inputFile : inputFiles) {
             final FileReader inputStream = new FileReader(inputFile);
@@ -85,7 +86,7 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
 
                 final StringWriter ssmlStringWriter = new StringWriter();
                 ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
-                synthesizer.synthesizeSsmlToFile(outputFile.getAbsolutePath(), ssmlStringWriter.toString());
+                synthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), outputFile.getAbsolutePath());
 
                 System.out.printf("  => Saved audio to file: %s%n", outputFile.getName());
             }
