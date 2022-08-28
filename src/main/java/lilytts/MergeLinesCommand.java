@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -14,10 +15,17 @@ import picocli.CommandLine.Parameters;
 @Command(name = "merge-lines")
 public class MergeLinesCommand implements Callable<Integer> {
     @Parameters(index = "0..*")
-    private List<File> textFiles;
+    private List<File> inputFiles;
 
     @Override
     public Integer call() throws Exception {
+        // If any of the input paths are directories, process all the *.txt files in the directory.
+        final List<File> textFiles = inputFiles.stream()
+            .flatMap(input -> input.isDirectory()
+                ? Stream.of(input.listFiles(file -> file.getName().endsWith(".txt")))
+                : Stream.of(input))
+            .toList();
+
         for (File textFile : textFiles) {
             final BufferedReader reader = new BufferedReader(new FileReader(textFile));
             StringBuilder result = new StringBuilder();
