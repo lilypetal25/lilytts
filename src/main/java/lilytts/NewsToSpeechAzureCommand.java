@@ -39,10 +39,10 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     @Parameters(index = "1")
     private File outputDirectory;
 
-    @Option(names = { "--subscriptionKey" })
+    @Option(names = { "--subscriptionKey" }, required = true)
     private String subscriptionKey;
 
-    @Option(names = { "--serviceRegion" })
+    @Option(names = { "--serviceRegion" }, required = true)
     private String serviceRegion;
 
     @Option(names = { "--voice" })

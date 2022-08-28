@@ -31,10 +31,10 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     @Parameters(index = "1..*")
     private List<File> inputFiles;
 
-    @Option(names = { "--subscriptionKey" })
+    @Option(names = { "--subscriptionKey" }, required = true)
     private String subscriptionKey;
     
-    @Option(names = { "--serviceRegion" })
+    @Option(names = { "--serviceRegion" }, required = true)
     private String serviceRegion;
 
     @Option(names = { "--voice" })
@@ -46,13 +46,13 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--prosodyRate" })
     private int prosodyRate = 0;
 
-    @Option(names = { "--author" })
+    @Option(names = { "--author" }, required = true)
     private String authorName;
 
-    @Option(names = { "--bookTitle" })
+    @Option(names = { "--bookTitle" }, required = true)
     private String bookTitle;
 
-    @Option(names = { "--publishedYear" })
+    @Option(names = { "--publishedYear" }, required = true)
     private String bookYear;
 
     @Override
