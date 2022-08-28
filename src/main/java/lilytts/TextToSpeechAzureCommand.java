@@ -66,9 +66,11 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
             final List<ContentItem> content = contentParser.readContent(inputStream);
             final List<List<ContentItem>> parts = splitter.splitContent(content);
 
-            System.out.printf("Converting input file '%s' to speech as %s part(s).\n",
-                inputFile.getName(),
-                parts.size());
+            System.out.printf("Converting file %d of %d to speech as %d part(s): %s%n",
+                inputFiles.indexOf(inputFile) + 1,
+                inputFiles.size(),
+                parts.size(),
+                inputFile.getName());
 
             for (int i = 0; i < parts.size(); i++) {
                 final String outputFileName = parts.size() > 1 ?
@@ -77,13 +79,15 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
                 final File outputFile = new File(outputDirectory, outputFileName);
 
                 if (this.skipExistingFiles && outputFile.exists() && outputFile.length() > 0) {
-                    System.out.printf("Skipping file '%s' because it already exists.\n", outputFile.getName());
+                    System.out.printf("  => Skipping file because it already exists:%s%n", outputFile.getName());
                     continue;
                 }
 
                 final StringWriter ssmlStringWriter = new StringWriter();
                 ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
                 synthesizer.synthesizeSsmlToFile(outputFile.getAbsolutePath(), ssmlStringWriter.toString());
+
+                System.out.printf("  => Saved audio to file: %s%n", outputFile.getName());
             }
         }
 
