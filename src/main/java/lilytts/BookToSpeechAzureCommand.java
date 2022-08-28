@@ -1,29 +1,30 @@
 package lilytts;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
-import javax.xml.stream.XMLOutputFactory;
 
-import lilytts.content.ContentItem;
+import com.mpatric.mp3agic.ID3v24Tag;
+
+import lilytts.content.ChapterTitleContent;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
 import lilytts.processing.ContentSplitter;
+import lilytts.processing.MetadataContext;
+import lilytts.processing.MetadataGenerator;
+import lilytts.processing.TextFileProcessor;
 import lilytts.ssml.SSMLWriter;
 import lilytts.synthesis.AzureSynthesizer;
 import lilytts.synthesis.AzureVoice;
-import lilytts.synthesis.AzureVoiceStyle;
 import lilytts.synthesis.SpeechSynthesizer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "text-to-speech-azure")
-public class TextToSpeechAzureCommand implements Callable<Integer> {
+@Command(name = "book-to-speech-azure")
+public class BookToSpeechAzureCommand implements Callable<Integer> {
     @Parameters(index = "0")
     private File outputDirectory;
 
@@ -42,14 +43,17 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--maxPartCharacters" })
     private int maxPartCharacters = 7500;
 
-    @Option(names = { "--skipExistingFiles" })
-    private boolean skipExistingFiles = false;
-
-    @Option(names = { "--voiceStyle" })
-    private AzureVoiceStyle voiceStyle = AzureVoiceStyle.General;
-
     @Option(names = { "--prosodyRate" })
     private int prosodyRate = 0;
+
+    @Option(names = { "--author" })
+    private String authorName;
+
+    @Option(names = { "--bookTitle" })
+    private String bookTitle;
+
+    @Option(names = { "--publishedYear" })
+    private String bookYear;
 
     @Override
     public Integer call() throws Exception {
@@ -57,48 +61,36 @@ public class TextToSpeechAzureCommand implements Callable<Integer> {
 
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
-        final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
         final ContentSplitter splitter = configureSplitter();
         final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
-        for (File inputFile : inputFiles) {
-            final FileReader inputStream = new FileReader(inputFile);
+        final MetadataGenerator metadataGenerator = new MetadataGenerator() {
+            public ID3v24Tag generateMetadata(MetadataContext context) {
+                final String chapterTitle = context.getContent().stream()
+                    .filter(x -> x instanceof ChapterTitleContent)
+                    .map(x -> ((ChapterTitleContent) x).getContent())
+                    .findFirst()
+                    .orElseGet(() -> removeFileExtension(context.getSourceFile().getName()));
 
-            final List<ContentItem> content = contentParser.readContent(inputStream);
-            final List<List<ContentItem>> parts = splitter.splitContent(content);
+                final ID3v24Tag metadata = new ID3v24Tag();
+                metadata.setArtist(authorName);
+                metadata.setAlbum(bookTitle);
+                metadata.setTitle(chapterTitle);
+                metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
 
-            System.out.printf("Converting file %d of %d to speech as %d part(s): %s%n",
-                inputFiles.indexOf(inputFile) + 1,
-                inputFiles.size(),
-                parts.size(),
-                inputFile.getName());
-
-            for (int i = 0; i < parts.size(); i++) {
-                final String outputFileName = parts.size() > 1 ?
-                    removeFileExtension(inputFile.getName()) + " (Part " + (i+1) + ").mp3" :
-                    removeFileExtension(inputFile.getName()) + ".mp3";
-                final File outputFile = new File(outputDirectory, outputFileName);
-
-                if (this.skipExistingFiles && outputFile.exists() && outputFile.length() > 0) {
-                    System.out.printf("  => Skipping file because it already exists:%s%n", outputFile.getName());
-                    continue;
-                }
-
-                final StringWriter ssmlStringWriter = new StringWriter();
-                ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
-                synthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), outputFile.getAbsolutePath());
-
-                System.out.printf("  => Saved audio to file: %s%n", outputFile.getName());
+                return metadata;
             }
-        }
+        };
+
+        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator);
+        fileProcessor.convertTextFiles(inputFiles, outputDirectory);
 
         return 0;
     }
 
     private SSMLWriter configureSsmlWriter() {
         SSMLWriter.Builder builder = SSMLWriter.builder()
-            .withVoice(voice.getVoiceName())
-            .withVoiceStyle(this.voiceStyle.getStyleIdentifier());
+            .withVoice(voice.getVoiceName());
         
         // TODO: Does this handle negative numbers?
         if (this.prosodyRate != 0) {

@@ -6,7 +6,7 @@ import picocli.CommandLine.Command;
 
 @Command(mixinStandardHelpOptions = true, subcommands = {
     TextToSsmlCommand.class,
-    TextToSpeechAzureCommand.class,
+    BookToSpeechAzureCommand.class,
     MergeLinesCommand.class,
     NewsToSpeechAzureCommand.class
 })
