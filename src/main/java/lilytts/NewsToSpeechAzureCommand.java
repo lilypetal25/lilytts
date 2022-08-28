@@ -1,9 +1,7 @@
 package lilytts;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -16,16 +14,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
-import javax.xml.stream.XMLOutputFactory;
-
 import com.mpatric.mp3agic.ID3v24Tag;
-import com.mpatric.mp3agic.Mp3File;
 
 import lilytts.content.ChapterTitleContent;
-import lilytts.content.ContentItem;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
 import lilytts.processing.ContentSplitter;
+import lilytts.processing.MetadataContext;
+import lilytts.processing.MetadataGenerator;
+import lilytts.processing.TextFileProcessor;
 import lilytts.ssml.SSMLWriter;
 import lilytts.synthesis.AzureNewsVoice;
 import lilytts.synthesis.AzureSynthesizer;
@@ -36,25 +33,6 @@ import picocli.CommandLine.Parameters;
 
 @Command(name = "news-to-speech-azure")
 public class NewsToSpeechAzureCommand implements Callable<Integer> {
-    private static class Article {
-        // TODO: Encapsulate these with getters.
-        private final String title;
-        private final String fileName;
-        private final File sourceFile;
-        private final String publisher;
-        private final FileTime savedDate;
-        private final List<ContentItem> content;
-
-        public Article(String title, String fileName, File sourceFile, String publisher, FileTime savedDate, List<ContentItem> content) {
-            this.title = title;
-            this.fileName = fileName;
-            this.sourceFile = sourceFile;
-            this.publisher = publisher;
-            this.savedDate = savedDate;
-            this.content = content;
-        }
-    }
-
     @Parameters(index = "0")
     private File inputDirectory;
 
@@ -88,13 +66,10 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
-        final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
         final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
 
-        int currentTrackNumber = 0;
-
-        final List<Article> articles = fetchArticles(contentParser, splitter);
+        final List<File> articleFiles = findArticleFiles();
         final File albumTargetFolder = this.resume ? findAlbumTargetFolderToResume() : findAvailableAlbumTargetFolder();
         final String albumName = albumTargetFolder.getName();
 
@@ -105,63 +80,42 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         System.out.printf("Album name: %s%n", albumName);
         System.out.printf("Input directory: %s%n", this.inputDirectory.getPath());
         System.out.printf("Output directory: %s%n", albumTargetFolder.getPath());
-        System.out.printf("Found %d articles to convert.%n", articles.size(), articles.size());
+        System.out.printf("Found %d articles to convert.%n", articleFiles.size());
 
-        if (!albumTargetFolder.exists() && !albumTargetFolder.mkdirs()) {
-            throw new Exception("Unable to create directory: " + albumTargetFolder.getPath());
-        }
+        // Sort files by creation time, from first created to last created.
+        Collections.sort(articleFiles, (file1, file2) -> {
+            try {
+                final FileTime creationTime1 = (FileTime) Files.getAttribute(file1.toPath(), "creationTime");
+                final FileTime creationTime2 = (FileTime) Files.getAttribute(file2.toPath(), "creationTime");
+                return creationTime1.compareTo(creationTime2);
+            } catch (IOException e) {
+                throw new RuntimeException("Unexpected error when reading file creation time: " + e.getMessage(), e);
+            }
+        });
 
-        Collections.sort(articles, (x, y) -> x.savedDate.compareTo(y.savedDate));
+        final MetadataGenerator metadataGenerator = new MetadataGenerator() {
+            public ID3v24Tag generateMetadata(MetadataContext context) {
+                final String publisher = context.getSourceFile().getParentFile().getName();
 
-        for (Article article : articles) {
-            final List<List<ContentItem>> parts = splitter.splitContent(article.content);
-
-            System.out.printf("Converting article %d of %d to speech as %s part(s): %s%n",
-                articles.indexOf(article) + 1,
-                articles.size(),
-                parts.size(),
-                article.sourceFile.getName());
-
-            // TODO: Share this code with TextToSpeechAzureCommand.
-            for (int i = 0; i < parts.size(); i++) {
-                currentTrackNumber++;
-
-                final String outputFileName = parts.size() > 1
-                        ? article.fileName + " (Part " + (i + 1) + ").mp3"
-                        : article.fileName + ".mp3";
-                final File outputFile = new File(albumTargetFolder, outputFileName);
-
-                final String title = parts.size() > 1
-                    ? article.title + " (Part " + (i + 1) + ")"
-                    : article.title;
-
-                if (outputFile.exists() && outputFile.length() > 0) {
-                    System.out.printf("  => Skipping file because it already exists:%s%n", outputFile.getName());
-                    continue;
-                }
-
-                final File tempOutputFile = File.createTempFile(article.fileName, ".mp3");
-                tempOutputFile.deleteOnExit();
-
-                final StringWriter ssmlStringWriter = new StringWriter();
-                ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
-                synthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), tempOutputFile.getAbsolutePath());
+                final String articleName = context.getContent().stream()
+                    .filter(x -> x instanceof ChapterTitleContent)
+                    .map(x -> ((ChapterTitleContent) x).getContent())
+                    .findFirst()
+                    .orElseGet(() -> removeFileExtension(context.getSourceFile().getName()));
 
                 final ID3v24Tag metadata = new ID3v24Tag();
-                metadata.setArtist(article.publisher);
+                metadata.setArtist(publisher);
                 metadata.setAlbumArtist("News Deep Dive");
                 metadata.setAlbum(albumName);
-                metadata.setTitle(title);
-                metadata.setTrack(Integer.toString(currentTrackNumber));
+                metadata.setTitle(articleName);
+                metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
 
-                Files.copy(tempOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                final Mp3File mp3File = new Mp3File(tempOutputFile.getAbsolutePath());
-                mp3File.setId3v2Tag(metadata);
-                mp3File.save(outputFile.getAbsolutePath());
-
-                System.out.printf("  => Saved audio to file: %s%n", outputFile.getName());
+                return metadata;
             }
-        }
+        };
+
+        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator);
+        fileProcessor.convertTextFiles(articleFiles, albumTargetFolder);
 
         if (this.archiveDirectory == null) {
             return 0;
@@ -170,8 +124,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         System.out.printf("Archiving articles to folder: %s%n", this.archiveDirectory.getPath());
         final String archiveDateFolderName = new SimpleDateFormat("YYYY-dd-MM").format(this.date);
         
-        for (Article article : articles) {
-            Path articleRelativePath = this.inputDirectory.toPath().relativize(article.sourceFile.toPath());
+        for (File file : articleFiles) {
+            Path articleRelativePath = this.inputDirectory.toPath().relativize(file.toPath());
 
             Path articleArchiveTargetPath = this.archiveDirectory
                 .toPath()
@@ -184,7 +138,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 throw new Exception("Unable to create directory: " + articleTargetFolder.getPath());
             }
 
-            Files.move(article.sourceFile.toPath(), articleArchiveTargetPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(file.toPath(), articleArchiveTargetPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
         System.out.println("Done!");
@@ -280,28 +234,15 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         }
     }
 
-    private List<Article> fetchArticles(ContentParser contentParser, ContentSplitter splitter) throws IOException {
-        final List<Article> articles = new ArrayList<>();
+    private List<File> findArticleFiles() {
+        final List<File> results = new ArrayList<>();
 
-        for (File publisherDirectory : inputDirectory.listFiles(x -> x.isDirectory())) {
-            final String publisherName = publisherDirectory.getName();
-
-            for (File articleTextFile : publisherDirectory.listFiles(x -> x.getName().endsWith(".txt"))) {
-                final FileReader inputStream = new FileReader(articleTextFile);
-                final List<ContentItem> content = contentParser.readContent(inputStream);
-                final FileTime savedDate = (FileTime) Files.getAttribute(articleTextFile.toPath(), "creationTime");
-                final String fileName = removeFileExtension(articleTextFile.getName());
-
-                final String articleName = content.stream()
-                        .filter(x -> x instanceof ChapterTitleContent)
-                        .map(x -> ((ChapterTitleContent) x).getContent())
-                        .findFirst()
-                        .orElseGet(() -> removeFileExtension(articleTextFile.getName()));
-
-                articles.add(new Article(articleName, fileName, articleTextFile, publisherName, savedDate, content));
+        for (File folder : inputDirectory.listFiles(x -> x.isDirectory())) {
+            for (File textFile : folder.listFiles(x -> x.getName().endsWith(".txt"))) {
+                results.add(textFile);
             }
         }
 
-        return articles;
+        return results;
     }
 }

@@ -42,6 +42,10 @@ public class TextFileProcessor {
     }
 
     public void convertTextFiles(final List<File> textFiles, final File targetFolder) throws SpeechSynthesisException, SSMLWritingException, IOException, XMLStreamException {
+        if (!targetFolder.exists() && !targetFolder.mkdirs()) {
+            throw new RuntimeException("Unable to create directory: " + targetFolder.getPath());
+        }
+
         int partsProcessed = -1;
 
         for (File textFile : textFiles) {
