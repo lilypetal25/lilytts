@@ -2,10 +2,11 @@ package lilytts;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.Callable;
-
 
 import com.mpatric.mp3agic.ID3v24Tag;
 
@@ -27,10 +28,10 @@ import picocli.CommandLine.Parameters;
 @Command(name = "book-to-speech-azure")
 public class BookToSpeechAzureCommand implements Callable<Integer> {
     @Parameters(index = "0")
-    private File outputDirectory;
+    private File inputDirectory;
 
-    @Parameters(index = "1..*")
-    private List<File> inputFiles;
+    @Parameters(index = "1")
+    private File outputDirectory;
 
     @Option(names = { "--subscriptionKey" }, required = true)
     private String subscriptionKey;
@@ -90,10 +91,41 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
             }
         };
 
+        final List<File> chapterFiles = findChapterFiles();
+        sortChapterFiles(chapterFiles);
+
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator);
-        fileProcessor.convertTextFiles(inputFiles, outputDirectory);
+        fileProcessor.convertTextFiles(chapterFiles, outputDirectory);
 
         return 0;
+    }
+
+    private List<File> findChapterFiles() {
+        return Arrays.asList(inputDirectory.listFiles(x -> x.getName().endsWith(".txt")));
+    }
+
+    private void sortChapterFiles(List<File> chapterFiles) {
+        final Map<String, Integer> weightingsByName = Map.of(
+            "front matter", -3,
+            "introduction", -2,
+            "preface", -1,
+            "conclusion", 1,
+            "postscript", 2
+        );
+
+        chapterFiles.sort((file1, file2) -> {
+            final String file1Key = removeFileExtension(file1.getName()).toLowerCase();
+            final String file2Key = removeFileExtension(file2.getName()).toLowerCase();
+
+            final int file1Weighting = weightingsByName.getOrDefault(file1Key, 0);
+            final int file2Weighting = weightingsByName.getOrDefault(file2Key, 0);
+
+            if (file1Weighting != file2Weighting) {
+                return Integer.compare(file1Weighting, file2Weighting);
+            }
+
+            return file1.getName().compareTo(file2.getName());
+        });
     }
 
     private SSMLWriter configureSsmlWriter() {
@@ -119,10 +151,8 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
             throw new IllegalArgumentException("Invalid output directory: " + outputDirectory.getAbsolutePath());
         }
         
-        for (File file : inputFiles) {
-            if (!(file.exists() && file.isFile())) {
-                throw new IllegalArgumentException("Invalid input file: " + file.getAbsolutePath());
-            }
+        if (!(inputDirectory.exists() && inputDirectory.isFile())) {
+            throw new IllegalArgumentException("Invalid input directory: " + inputDirectory.getAbsolutePath());
         }
     }
 
