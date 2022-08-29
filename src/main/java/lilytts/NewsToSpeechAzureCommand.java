@@ -117,7 +117,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator);
         fileProcessor.convertTextFiles(articleFiles, albumTargetFolder);
 
-        if (this.archiveDirectory == null) {
+        if (this.archiveDirectory == null || articleFiles.isEmpty()) {
             return 0;
         }
 
