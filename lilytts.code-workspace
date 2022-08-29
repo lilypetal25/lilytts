@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"cSpell.words": [
+			"lilytts"
+		],
+		"cSpell.showAutocompleteSuggestions": false
+	}
+}
