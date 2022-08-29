@@ -1,6 +1,7 @@
 package lilytts;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
@@ -55,6 +56,9 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--publishedYear" }, required = true)
     private String bookYear;
 
+    @Option(names = { "--cover" }, required = true)
+    private File coverImageFile;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -63,6 +67,9 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = configureSplitter();
         final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
+
+        final byte[] coverImageBytes = Files.readAllBytes(coverImageFile.toPath());
+        final String coverImageMimeType = Files.probeContentType(coverImageFile.toPath());
 
         final MetadataGenerator metadataGenerator = new MetadataGenerator() {
             public ID3v24Tag generateMetadata(MetadataContext context) {
@@ -77,6 +84,7 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
                 metadata.setAlbum(bookTitle);
                 metadata.setTitle(chapterTitle);
                 metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
+                metadata.setAlbumImage(coverImageBytes, coverImageMimeType);
 
                 return metadata;
             }
