@@ -84,10 +84,14 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
                     .findFirst()
                     .orElseGet(() -> removeFileExtension(context.getSourceFile().getName()));
 
+                final String trackTitle = context.getPartsInFile() == 1 ?
+                    chapterTitle :
+                    String.format("%s (Part %d of %d)", chapterTitle, context.getPartIndex() + 1, context.getPartsInFile());
+
                 final ID3v24Tag metadata = new ID3v24Tag();
                 metadata.setArtist(authorName);
                 metadata.setAlbum(bookTitle);
-                metadata.setTitle(chapterTitle);
+                metadata.setTitle(trackTitle);
                 metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
                 metadata.setAlbumImage(coverImageBytes, coverImageMimeType);
 
@@ -117,8 +121,8 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     private void sortChapterFiles(List<File> chapterFiles) {
         final Map<String, Integer> weightingsByName = Map.of(
             "front matter", -3,
-            "introduction", -2,
-            "preface", -1,
+            "preface", -2,
+            "introduction", -1,
             "conclusion", 1,
             "postscript", 2
         );
