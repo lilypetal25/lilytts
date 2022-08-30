@@ -157,12 +157,12 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     }
 
     private void validateCommandLineParameters() {
+        if (!(inputDirectory.exists() && inputDirectory.isDirectory())) {
+            throw new IllegalArgumentException("Invalid input directory: " + inputDirectory.getAbsolutePath());
+        }
+
         if (!(outputDirectory.exists() && outputDirectory.isDirectory())) {
             throw new IllegalArgumentException("Invalid output directory: " + outputDirectory.getAbsolutePath());
-        }
-        
-        if (!(inputDirectory.exists() && inputDirectory.isFile())) {
-            throw new IllegalArgumentException("Invalid input directory: " + inputDirectory.getAbsolutePath());
         }
     }
 
