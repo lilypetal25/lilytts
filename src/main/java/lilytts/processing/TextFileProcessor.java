@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.function.Predicate;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -42,6 +43,10 @@ public class TextFileProcessor {
     }
 
     public void convertTextFiles(final List<File> textFiles, final File targetFolder) throws SpeechSynthesisException, SSMLWritingException, IOException, XMLStreamException {
+        convertTextFiles(textFiles, targetFolder, x -> true);
+    }
+
+    public void convertTextFiles(final List<File> textFiles, final File targetFolder, final Predicate<File> fileFilter) throws SpeechSynthesisException, SSMLWritingException, IOException, XMLStreamException {
         if (!targetFolder.exists() && !targetFolder.mkdirs()) {
             throw new RuntimeException("Unable to create directory: " + targetFolder.getPath());
         }
@@ -67,6 +72,11 @@ public class TextFileProcessor {
                         ? fileNameWithoutExtension + " (Part " + (i + 1) + ").mp3"
                         : fileNameWithoutExtension + ".mp3";
                 final File outputFile = new File(targetFolder, outputFileName);
+
+                if (!fileFilter.test(textFile)) {
+                    System.out.printf("  => Skipping file.%n", outputFile.getName());
+                    continue;
+                }
 
                 if (outputFile.exists() && outputFile.length() > 0) {
                     System.out.printf("  => Skipping file because it already exists:%s%n", outputFile.getName());

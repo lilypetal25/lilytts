@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.function.Predicate;
 
 import com.mpatric.mp3agic.ID3v24Tag;
 
@@ -60,6 +61,9 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--cover" }, required = true)
     private File coverImageFile;
 
+    @Option(names = { "--only" } )
+    private File onlyFile = null;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -94,8 +98,14 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         final List<File> chapterFiles = findChapterFiles();
         sortChapterFiles(chapterFiles);
 
+        if (this.onlyFile != null && !chapterFiles.stream().anyMatch(x -> x.equals(this.onlyFile))) {
+            throw new IllegalArgumentException("File does not appear in the list of chapters to convert: " + this.onlyFile.getPath());
+        }
+
+        final Predicate<File> fileFilter = (file) -> this.onlyFile == null || this.onlyFile.equals(file);
+
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator);
-        fileProcessor.convertTextFiles(chapterFiles, outputDirectory);
+        fileProcessor.convertTextFiles(chapterFiles, outputDirectory, fileFilter);
 
         return 0;
     }
