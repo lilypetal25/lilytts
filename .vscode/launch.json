@@ -6,17 +6,18 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Launch Current File",
-            "request": "launch",
-            "mainClass": "${file}"
-        },
-        {
-            "type": "java",
-            "name": "Launch AzureTTS",
+            "name": "Launch Book to speech",
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "text-to-speech-azure @/Users/lily/Downloads/azure-argfile.args"
+            "args": [
+                "book-to-speech-azure",
+                "/Users/lily/Library/CloudStorage/OneDrive-Personal/Book workspace/Chapters",
+                "/Users/lily/Library/CloudStorage/OneDrive-Personal/Book workspace/Audio",
+                "--only",
+                "/Users/lily/Library/CloudStorage/OneDrive-Personal/Book workspace/Chapters/Preface.txt",
+                "@/Users/lily/Library/CloudStorage/OneDrive-Personal/Book workspace/arguments.args"
+            ]
         },
         {
             "type": "java",
@@ -36,7 +37,7 @@
         },
         {
             "type": "java",
-            "name": "Launch News text to speech",
+            "name": "Launch News to speech",
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
