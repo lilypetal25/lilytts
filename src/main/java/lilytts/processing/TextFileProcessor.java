@@ -79,7 +79,7 @@ public class TextFileProcessor {
                 }
 
                 if (outputFile.exists() && outputFile.length() > 0) {
-                    System.out.printf("  => Skipping file because it already exists:%s%n", outputFile.getName());
+                    System.out.printf("  => Skipping file because it already exists: %s%n", outputFile.getName());
                     continue;
                 }
 
