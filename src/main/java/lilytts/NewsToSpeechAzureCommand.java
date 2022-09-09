@@ -122,7 +122,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         }
 
         System.out.printf("Archiving articles to folder: %s%n", this.archiveDirectory.getPath());
-        final String archiveDateFolderName = new SimpleDateFormat("YYYY-dd-MM").format(this.date);
+        final String archiveDateFolderName = new SimpleDateFormat("YYYY-MM-dd").format(this.date);
         
         for (File file : articleFiles) {
             Path articleRelativePath = this.inputDirectory.toPath().relativize(file.toPath());
