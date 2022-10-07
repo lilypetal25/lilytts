@@ -48,8 +48,11 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--maxPartCharacters" })
     private int maxPartCharacters = 7500;
 
-    @Option(names = { "--prosodyRate" })
+    @Option(names = { "--prosody" })
     private int prosodyRate = 0;
+
+    @Option(names = { "--pitch" })
+    private int pitch = 0;
 
     @Option(names = { "--author" }, required = true)
     private String authorName;
@@ -165,12 +168,19 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         SSMLWriter.Builder builder = SSMLWriter.builder()
             .withVoice(voice.getVoiceName());
         
-        // TODO: Does this handle negative numbers?
         if (this.prosodyRate != 0) {
-            builder = builder.withProsodyRate(String.format(Locale.ENGLISH, "%d%%", this.prosodyRate));
+            builder = builder.withProsodyRate(formatPercent(this.prosodyRate));
+        }
+
+        if (this.pitch != 0) {
+            builder = builder.withPitch(formatPercent(this.pitch));
         }
         
         return builder.build();
+    }
+
+    private static String formatPercent(int value) {
+        return String.format(Locale.ENGLISH, "%d%%", value);
     }
 
     private ContentSplitter configureSplitter() {

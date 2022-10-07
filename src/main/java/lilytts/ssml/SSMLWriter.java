@@ -10,6 +10,7 @@ import lilytts.content.ChapterTitleContent;
 import lilytts.content.ContentItem;
 import lilytts.content.ParagraphContent;
 import lilytts.content.SectionBreakContent;
+import static lilytts.StringUtil.nullOrEmpty;
 
 public class SSMLWriter {
     public static class Builder {
@@ -17,6 +18,7 @@ public class SSMLWriter {
         private String voiceName = null;
         private String voiceStyle = null;
         private String prosodyRate = null;
+        private String pitch = null;
 
         public Builder withVoice(String voiceName) {
             this.writeVoiceElement = true;
@@ -34,8 +36,13 @@ public class SSMLWriter {
             return this;
         }
 
+        public Builder withPitch(String pitch) {
+            this.pitch = pitch;
+            return this;
+        }
+
         public SSMLWriter build() {
-            return new SSMLWriter(writeVoiceElement, voiceName, voiceStyle, prosodyRate);
+            return new SSMLWriter(writeVoiceElement, voiceName, voiceStyle, prosodyRate, pitch);
         }
     }
 
@@ -47,23 +54,25 @@ public class SSMLWriter {
     private final String voiceName;
     private final String voiceStyle;
     private final String prosodyRate;
+    private final String pitch;
 
     private SSMLWriter(
         final boolean writeVoiceElement,
         final String voiceName,
         final String voiceStyle,
-        final String prosodyRate) {
+        final String prosodyRate,
+        final String pitch) {
         this.writeVoiceElement = writeVoiceElement;
         this.voiceName = voiceName;
         this.voiceStyle = voiceStyle;
         this.prosodyRate = prosodyRate;
+        this.pitch = pitch;
     }
 
     public void writeSSML(Iterable<ContentItem> content, XMLStreamWriter out) throws SSMLWritingException {
         try {
-            // TODO: Isn't there a helper method somewhere which can check if a string is null or empty?
-            final boolean writeStyleElement = this.voiceStyle != null && !this.voiceStyle.isEmpty();
-            final boolean writeProsodyElement = this.prosodyRate != null && !this.prosodyRate.isEmpty();
+            final boolean writeStyleElement = !nullOrEmpty(this.voiceStyle);
+            final boolean writeProsodyElement = !nullOrEmpty(this.prosodyRate) || !nullOrEmpty(this.pitch);
 
             out.writeStartDocument();
             out.writeStartElement("speak");
@@ -84,7 +93,14 @@ public class SSMLWriter {
 
             if (writeProsodyElement) {
                 out.writeStartElement("prosody");
-                out.writeAttribute("rate", this.prosodyRate);
+
+                if (!nullOrEmpty(this.prosodyRate)) {
+                    out.writeAttribute("rate", this.prosodyRate);
+                }
+
+                if (!nullOrEmpty(this.pitch)) {
+                    out.writeAttribute("pitch", this.pitch);
+                }
             }
 
             // TODO: This would be better as a visitor pattern.
@@ -100,6 +116,10 @@ public class SSMLWriter {
                 } else {
                     throw new IllegalArgumentException("Unknown content item type: " + item.getClass().getSimpleName());
                 }
+            }
+
+            if (writeProsodyElement) {
+                out.writeEndElement();
             }
 
             if (writeStyleElement) {
