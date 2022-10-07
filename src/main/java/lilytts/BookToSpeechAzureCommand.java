@@ -3,6 +3,7 @@ package lilytts;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -64,6 +65,12 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--only" } )
     private File onlyFile = null;
 
+    @Option(names = { "--pretend", "-n" } )
+    private boolean pretend = false;
+
+    @Option(names = { "--ignore" } )
+    private List<File> ignoreFiles = Collections.emptyList();
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -102,11 +109,19 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         final List<File> chapterFiles = findChapterFiles();
         sortChapterFiles(chapterFiles);
 
-        if (this.onlyFile != null && !chapterFiles.stream().anyMatch(x -> x.equals(this.onlyFile))) {
-            throw new IllegalArgumentException("File does not appear in the list of chapters to convert: " + this.onlyFile.getPath());
-        }
+        Predicate<File> fileFilter;
 
-        final Predicate<File> fileFilter = (file) -> this.onlyFile == null || this.onlyFile.equals(file);
+        if (this.pretend) {
+            fileFilter = (file) -> false;
+        } else if (this.onlyFile != null) {
+            if (!chapterFiles.stream().anyMatch(x -> x.equals(this.onlyFile))) {
+                throw new IllegalArgumentException("File does not appear in the list of chapters to convert: " + this.onlyFile.getPath());
+            }
+
+            fileFilter = (file) -> this.onlyFile == null || this.onlyFile.equals(file);
+        } else {
+            fileFilter = (file) -> true;
+        }
 
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator);
         fileProcessor.convertTextFiles(chapterFiles, outputDirectory, fileFilter);
@@ -116,7 +131,10 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     }
 
     private List<File> findChapterFiles() {
-        return Arrays.asList(inputDirectory.listFiles(x -> x.getName().endsWith(".txt")));
+        List<File> files = Arrays.asList(inputDirectory.listFiles(x -> x.getName().endsWith(".txt")));
+        files.removeIf(file -> this.ignoreFiles.stream().anyMatch(ignored -> ignored.equals(file)));
+
+        return files;
     }
 
     private void sortChapterFiles(List<File> chapterFiles) {
