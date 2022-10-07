@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.mpatric.mp3agic.ID3v24Tag;
 
@@ -131,10 +132,9 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
     }
 
     private List<File> findChapterFiles() {
-        List<File> files = Arrays.asList(inputDirectory.listFiles(x -> x.getName().endsWith(".txt")));
-        files.removeIf(file -> this.ignoreFiles.stream().anyMatch(ignored -> ignored.equals(file)));
-
-        return files;
+        return Arrays.stream(inputDirectory.listFiles(x -> x.getName().endsWith(".txt")))
+            .filter(file -> !this.ignoreFiles.stream().anyMatch(ignored -> ignored.getAbsoluteFile().equals(file.getAbsoluteFile())))
+            .collect(Collectors.toList());
     }
 
     private void sortChapterFiles(List<File> chapterFiles) {
