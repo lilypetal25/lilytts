@@ -8,7 +8,8 @@ import picocli.CommandLine.Command;
     TextToSsmlCommand.class,
     BookToSpeechAzureCommand.class,
     MergeLinesCommand.class,
-    NewsToSpeechAzureCommand.class
+    NewsToSpeechAzureCommand.class,
+    FindArticlesCommand.class
 })
 public class RootCommand implements Callable<Integer> {
     @Override
