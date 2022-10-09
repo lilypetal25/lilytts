@@ -34,7 +34,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = "news-to-speech-azure")
 public class NewsToSpeechAzureCommand implements Callable<Integer> {
     @Parameters(index = "0")
-    private File inputDirectory;
+    private File inputDirectoryOrFile;
 
     @Parameters(index = "1")
     private File outputDirectory;
@@ -78,7 +78,6 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         }
 
         System.out.printf("Album name: %s%n", albumName);
-        System.out.printf("Input directory: %s%n", this.inputDirectory.getPath());
         System.out.printf("Output directory: %s%n", albumTargetFolder.getPath());
         System.out.printf("Found %d articles to convert.%n", articleFiles.size());
 
@@ -125,7 +124,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final String archiveDateFolderName = new SimpleDateFormat("YYYY-MM-dd").format(this.date);
         
         for (File file : articleFiles) {
-            Path articleRelativePath = this.inputDirectory.toPath().relativize(file.toPath());
+            Path articleRelativePath = this.inputDirectoryOrFile.toPath().relativize(file.toPath());
 
             Path articleArchiveTargetPath = this.archiveDirectory
                 .toPath()
@@ -194,8 +193,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     }
 
     private void validateCommandLineParameters() {
-        if (!inputDirectory.isDirectory() || !inputDirectory.exists()) {
-            throw new IllegalArgumentException("Invalid input directory: " + inputDirectory.getAbsolutePath());
+        if (!inputDirectoryOrFile.isDirectory() || !inputDirectoryOrFile.exists()) {
+            throw new IllegalArgumentException("Invalid input directory: " + inputDirectoryOrFile.getAbsolutePath());
         }
 
         if (!(outputDirectory.exists() && outputDirectory.isDirectory())) {
@@ -237,7 +236,9 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     private List<File> findArticleFiles() {
         final List<File> results = new ArrayList<>();
 
-        for (File folder : inputDirectory.listFiles(x -> x.isDirectory())) {
+        System.out.printf("Input directory: %s%n", this.inputDirectoryOrFile.getPath());
+
+        for (File folder : inputDirectoryOrFile.listFiles(x -> x.isDirectory())) {
             for (File textFile : folder.listFiles(x -> x.getName().endsWith(".txt"))) {
                 results.add(textFile);
             }

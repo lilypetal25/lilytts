@@ -12,7 +12,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "list-articles")
+@Command(name = "find-articles")
 public class FindArticlesCommand implements Callable<Integer> {
     @Parameters(index = "0")
     private File inputDirectory;
@@ -35,7 +35,7 @@ public class FindArticlesCommand implements Callable<Integer> {
         });
 
         for (File articleFile : articleFiles) {
-            System.out.println(articleFile.toString());
+            System.out.println(articleFile.getPath());
         }
 
         return 0;
