@@ -81,17 +81,6 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         System.out.printf("Output directory: %s%n", albumTargetFolder.getPath());
         System.out.printf("Found %d articles to convert.%n", articleFiles.size());
 
-        // Sort files by creation time, from first created to last created.
-        Collections.sort(articleFiles, (file1, file2) -> {
-            try {
-                final FileTime creationTime1 = (FileTime) Files.getAttribute(file1.toPath(), "creationTime");
-                final FileTime creationTime2 = (FileTime) Files.getAttribute(file2.toPath(), "creationTime");
-                return creationTime1.compareTo(creationTime2);
-            } catch (IOException e) {
-                throw new RuntimeException("Unexpected error when reading file creation time: " + e.getMessage(), e);
-            }
-        });
-
         final MetadataGenerator metadataGenerator = new MetadataGenerator() {
             public ID3v24Tag generateMetadata(MetadataContext context) {
                 final String publisher = context.getSourceFile().getParentFile().getName();
@@ -193,8 +182,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     }
 
     private void validateCommandLineParameters() {
-        if (!inputDirectoryOrFile.isDirectory() || !inputDirectoryOrFile.exists()) {
-            throw new IllegalArgumentException("Invalid input directory: " + inputDirectoryOrFile.getAbsolutePath());
+        if (!inputDirectoryOrFile.exists()) {
+            throw new IllegalArgumentException("Invalid input directory or file`: " + inputDirectoryOrFile.getAbsolutePath());
         }
 
         if (!(outputDirectory.exists() && outputDirectory.isDirectory())) {
@@ -233,17 +222,47 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         }
     }
 
-    private List<File> findArticleFiles() {
-        final List<File> results = new ArrayList<>();
+    // TODO: Share the logic for enumerating text files with the find-articles command.
+    private List<File> findArticleFiles() throws IOException {
+        if (this.inputDirectoryOrFile.isDirectory()) {
+            System.out.printf("Input directory: %s%n", this.inputDirectoryOrFile.getPath());
 
-        System.out.printf("Input directory: %s%n", this.inputDirectoryOrFile.getPath());
+            final List<File> results = new ArrayList<>();
 
-        for (File folder : inputDirectoryOrFile.listFiles(x -> x.isDirectory())) {
-            for (File textFile : folder.listFiles(x -> x.getName().endsWith(".txt"))) {
-                results.add(textFile);
+            for (File folder : inputDirectoryOrFile.listFiles(x -> x.isDirectory())) {
+                for (File textFile : folder.listFiles(x -> x.getName().endsWith(".txt"))) {
+                    results.add(textFile);
+                }
             }
-        }
 
-        return results;
+            // Sort files by creation time, from first created to last created.
+            Collections.sort(results, (file1, file2) -> {
+                try {
+                    final FileTime creationTime1 = (FileTime) Files.getAttribute(file1.toPath(), "creationTime");
+                    final FileTime creationTime2 = (FileTime) Files.getAttribute(file2.toPath(), "creationTime");
+                    return creationTime1.compareTo(creationTime2);
+                } catch (IOException e) {
+                    throw new RuntimeException("Unexpected error when reading file creation time: " + e.getMessage(), e);
+                }
+            });
+
+            return results;
+        } else {
+            System.out.printf("Input file list: %s%n", this.inputDirectoryOrFile.getPath());
+            
+            List<File> results = Files.readAllLines(this.inputDirectoryOrFile.toPath())
+                .stream()
+                .map(path -> new File(path))
+                .toList();
+
+            results.stream()
+                .filter(file -> !file.exists() || file.isDirectory())
+                .findFirst()
+                .ifPresent(file -> {
+                    throw new IllegalArgumentException("Invalid input file: " + file.getPath());
+                });
+            
+            return results;
+        }
     }
 }
