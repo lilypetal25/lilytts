@@ -115,7 +115,9 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final String archiveDateFolderName = new SimpleDateFormat("YYYY-MM-dd").format(this.date);
         
         for (File file : articleFiles) {
-            Path articleRelativePath = this.inputDirectoryOrFile.toPath().relativize(file.toPath());
+            Path articleRelativePath = file.isAbsolute()
+                ? this.inputDirectoryOrFile.toPath().relativize(file.toPath())
+                : file.toPath();
 
             Path articleArchiveTargetPath = this.archiveDirectory
                 .toPath()
@@ -256,7 +258,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
                 .stream()
                 .map(line -> line.trim())
                 .map(line -> substringBefore(line, "#"))
-                .filter(line -> line.isEmpty())
+                .filter(line -> !line.isBlank())
                 .map(path -> new File(path))
                 .toList();
 
