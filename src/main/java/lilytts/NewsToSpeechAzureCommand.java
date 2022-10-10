@@ -31,6 +31,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import static lilytts.StringUtil.substringBefore;
+
 @Command(name = "news-to-speech-azure")
 public class NewsToSpeechAzureCommand implements Callable<Integer> {
     @Parameters(index = "0")
@@ -253,7 +255,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
             List<File> results = Files.readAllLines(this.inputDirectoryOrFile.toPath())
                 .stream()
                 .map(line -> line.trim())
-                .filter(line -> line.isEmpty() || line.startsWith("#"))
+                .map(line -> substringBefore(line, "#"))
+                .filter(line -> line.isEmpty())
                 .map(path -> new File(path))
                 .toList();
 
