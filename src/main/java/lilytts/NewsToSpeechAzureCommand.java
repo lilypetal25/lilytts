@@ -252,6 +252,8 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
             
             List<File> results = Files.readAllLines(this.inputDirectoryOrFile.toPath())
                 .stream()
+                .map(line -> line.trim())
+                .filter(line -> line.isEmpty() || line.startsWith("#"))
                 .map(path -> new File(path))
                 .toList();
 
