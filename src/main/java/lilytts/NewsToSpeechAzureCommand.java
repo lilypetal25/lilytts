@@ -16,6 +16,7 @@ import java.util.concurrent.Callable;
 
 import com.mpatric.mp3agic.ID3v24Tag;
 
+import lilytts.content.ArticlePublisherContent;
 import lilytts.content.ChapterTitleContent;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
@@ -66,7 +67,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         validateCommandLineParameters();
 
-        final ContentParser contentParser = TextContentParser.builder().build();
+        final ContentParser contentParser = TextContentParser.builder().setRecognizeArticlePublisher(true).build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
         final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
@@ -85,13 +86,17 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
         final MetadataGenerator metadataGenerator = new MetadataGenerator() {
             public ID3v24Tag generateMetadata(MetadataContext context) {
-                final String publisher = context.getSourceFile().getParentFile().getName();
-
                 final String articleName = context.getContent().stream()
                     .filter(x -> x instanceof ChapterTitleContent)
                     .map(x -> ((ChapterTitleContent) x).getContent())
                     .findFirst()
                     .orElseGet(() -> removeFileExtension(context.getSourceFile().getName()));
+
+                final String publisher = context.getContent().stream()
+                    .filter(x -> x instanceof ArticlePublisherContent)
+                    .map(x -> ((ArticlePublisherContent) x).getPublisher())
+                    .findFirst()
+                    .orElse("");
 
                 final ID3v24Tag metadata = new ID3v24Tag();
                 metadata.setArtist(publisher);

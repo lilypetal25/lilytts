@@ -4,22 +4,18 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "find-articles")
-public class FindArticlesCommand implements Callable<Integer> {
+@Command(name = "find-articles-legacy")
+public class FindArticlesLegacyCommand implements Callable<Integer> {
     @Parameters(index = "0")
     private File inputDirectory;
-
-    @Option(names = { "--ignore" } )
-    private List<File> ignoreFiles = Collections.emptyList();
 
     @Override
     public Integer call() throws Exception {
@@ -51,21 +47,15 @@ public class FindArticlesCommand implements Callable<Integer> {
         }
     }
 
-    // TODO: Share this logic with NewsToSpeechAzureCommand.
     private List<File> findArticleFiles() {
-        return Arrays.asList(inputDirectory.listFiles(file -> {
-            // Only match *.txt files.
-            if (!file.getName().endsWith(".txt")) {
-                return false;
-            }
+        final List<File> results = new ArrayList<>();
 
-            // Ignore files in the ignore list.
-            // TODO: Implement a compare file helper method to share the code for comparing files by absolute path.
-            if (this.ignoreFiles.stream().anyMatch(ignored -> ignored.getAbsoluteFile().equals(file.getAbsoluteFile()))) {
-                return false;
+        for (File folder : inputDirectory.listFiles(x -> x.isDirectory())) {
+            for (File textFile : folder.listFiles(x -> x.getName().endsWith(".txt"))) {
+                results.add(textFile);
             }
+        }
 
-            return true;
-        }));
+        return results;
     }
 }

@@ -5,6 +5,7 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
+import lilytts.content.ArticlePublisherContent;
 import lilytts.content.ChapterEndContent;
 import lilytts.content.ChapterTitleContent;
 import lilytts.content.ContentItem;
@@ -113,6 +114,8 @@ public class SSMLWriter {
                     writeSectionBreak(out, (SectionBreakContent)item);
                 } else if (item instanceof ChapterEndContent) {
                     writeChapterEnd(out, (ChapterEndContent)item);
+                } else if (item instanceof ArticlePublisherContent) {
+                    writeArticlePublisher(out, (ArticlePublisherContent)item);
                 } else {
                     throw new IllegalArgumentException("Unknown content item type: " + item.getClass().getSimpleName());
                 }
@@ -138,39 +141,45 @@ public class SSMLWriter {
             throw new SSMLWritingException("An unexpected error occurred while writing SSML: " + e.getMessage(), e);
         }
     }
-
+    
     private void writeChapterTitle(XMLStreamWriter out, ChapterTitleContent item) throws XMLStreamException {
         writeBreak(out, "2s");
-
+        
         out.writeStartElement("p");
         out.writeCharacters(item.getContent());
         out.writeEndElement();
-
+        
         writeBreak(out, "1s");
     }
-
+    
+    private void writeArticlePublisher(XMLStreamWriter out, ArticlePublisherContent item) throws XMLStreamException {
+        out.writeStartElement("p");
+        out.writeCharacters(item.getContent());
+        out.writeEndElement();
+    }
+    
     private void writeParagraph(XMLStreamWriter out, ParagraphContent item) throws XMLStreamException {
         out.writeStartElement("p");
         out.writeCharacters(item.getContent());
         out.writeEndElement();
     }
-
+    
     private void writeSectionBreak(XMLStreamWriter out, SectionBreakContent item) throws XMLStreamException {
         writeBreak(out, "2s");
-
+        
         if (!item.getSectionTitle().isBlank()) {
             out.writeStartElement("p");
             out.writeCharacters(item.getSectionTitle());
             out.writeEndElement();
-
+            
             writeBreak(out, "1s");
         }
     }
-
+    
     private void writeChapterEnd(XMLStreamWriter out, ChapterEndContent item) throws XMLStreamException {
         writeBreak(out, "2s");
     }
-
+    
     private void writeBreak(XMLStreamWriter out, String time) throws XMLStreamException {
         out.writeStartElement("break");
         out.writeAttribute("time", time);

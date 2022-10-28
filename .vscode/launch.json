@@ -41,7 +41,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "news-to-speech-azure --resume @/Users/lily/Library/CloudStorage/OneDrive-Personal/Articles/arguments.args",
+            "args": "news-to-speech-azure @/Users/lily/Library/CloudStorage/OneDrive-Personal/Articles/arguments.args",
             "cwd": "/Users/lily/Library/CloudStorage/OneDrive-Personal/Articles/"
         }
     ]
