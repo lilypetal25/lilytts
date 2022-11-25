@@ -63,6 +63,12 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     @Option(names = { "--resume" })
     private boolean resume = false;
 
+    @Option(names = { "--albumName" })
+    private String albumName = null;
+
+    @Option(names = { "--albumArtist" })
+    private String albumArtist = null;
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -74,7 +80,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
         final List<File> articleFiles = findArticleFiles();
         final File albumTargetFolder = this.resume ? findAlbumTargetFolderToResume() : findAvailableAlbumTargetFolder();
-        final String albumName = albumTargetFolder.getName();
+        final String albumName = this.albumName != null ? this.albumName : albumTargetFolder.getName();
 
         if (this.resume) {
             System.out.printf("Resuming processing of last album.%n");
@@ -100,7 +106,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
                 final ID3v24Tag metadata = new ID3v24Tag();
                 metadata.setArtist(publisher);
-                metadata.setAlbumArtist("News Deep Dive");
+                metadata.setAlbumArtist(NewsToSpeechAzureCommand.this.albumArtist != null ? NewsToSpeechAzureCommand.this.albumArtist : "News Deep Dive");
                 metadata.setAlbum(albumName);
                 metadata.setTitle(articleName);
                 metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
