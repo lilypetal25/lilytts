@@ -197,6 +197,10 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         if (!(outputDirectory.exists() && outputDirectory.isDirectory())) {
             throw new IllegalArgumentException("Invalid output directory: " + outputDirectory.getAbsolutePath());
         }
+
+        if (!(coverImageFile.exists() && coverImageFile.isFile())) {
+            throw new IllegalArgumentException("Invalid cover image file: " + coverImageFile.getAbsolutePath());
+        }
     }
 
     private static String removeFileExtension(String fileName) {
