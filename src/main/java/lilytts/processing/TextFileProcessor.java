@@ -73,13 +73,13 @@ public class TextFileProcessor {
                         : fileNameWithoutExtension + ".mp3";
                 final File outputFile = new File(targetFolder, outputFileName);
 
-                if (!fileFilter.test(textFile)) {
-                    System.out.printf("  => Skipping file.%n", outputFile.getName());
+                if (outputFile.exists() && outputFile.length() > 0) {
+                    System.out.printf("  => Skipping file because it already exists: %s%n", outputFile.getName());
                     continue;
                 }
 
-                if (outputFile.exists() && outputFile.length() > 0) {
-                    System.out.printf("  => Skipping file because it already exists: %s%n", outputFile.getName());
+                if (!fileFilter.test(textFile)) {
+                    System.out.printf("  => Skipping file.%n", outputFile.getName());
                     continue;
                 }
 
