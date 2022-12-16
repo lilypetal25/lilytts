@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -22,6 +23,7 @@ import lilytts.content.ContentItem;
 import lilytts.parsing.ContentParser;
 import lilytts.ssml.SSMLWriter;
 import lilytts.ssml.SSMLWritingException;
+import lilytts.synthesis.CostEstimator;
 import lilytts.synthesis.SpeechSynthesisException;
 import lilytts.synthesis.SpeechSynthesizer;
 
@@ -32,14 +34,16 @@ public class TextFileProcessor {
     private final SSMLWriter ssmlWriter;
     private final XMLOutputFactory xmlOutputFactory;
     private final MetadataGenerator metadataGenerator;
+    private final CostEstimator costEstimator;
 
-    public TextFileProcessor(SpeechSynthesizer speechSynthesizer, ContentParser contentParser, ContentSplitter splitter, SSMLWriter ssmlWriter, MetadataGenerator metadataGenerator) {
+    public TextFileProcessor(SpeechSynthesizer speechSynthesizer, ContentParser contentParser, ContentSplitter splitter, SSMLWriter ssmlWriter, MetadataGenerator metadataGenerator, CostEstimator costEstimator) {
         this.speechSynthesizer = speechSynthesizer;
         this.contentParser = contentParser;
         this.splitter = splitter;
         this.ssmlWriter = ssmlWriter;
         this.metadataGenerator = metadataGenerator;
         this.xmlOutputFactory = XMLOutputFactory.newFactory();
+        this.costEstimator = costEstimator;
     }
 
     public void convertTextFiles(final List<File> textFiles, final File targetFolder) throws SpeechSynthesisException, SSMLWritingException, IOException, XMLStreamException {
@@ -52,6 +56,7 @@ public class TextFileProcessor {
         }
 
         int partsProcessed = -1;
+        double totalEstimatedCost = 0.0;
 
         for (File textFile : textFiles) {
             final FileReader inputStream = new FileReader(textFile);
@@ -73,6 +78,11 @@ public class TextFileProcessor {
                         : fileNameWithoutExtension + ".mp3";
                 final File outputFile = new File(targetFolder, outputFileName);
 
+                final StringWriter ssmlStringWriter = new StringWriter();
+                ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
+
+                totalEstimatedCost += costEstimator.getEstimatedCost(ssmlStringWriter.toString());
+
                 if (outputFile.exists() && outputFile.length() > 0) {
                     System.out.printf("  => Skipping file because it already exists: %s%n", outputFile.getName());
                     continue;
@@ -86,8 +96,6 @@ public class TextFileProcessor {
                 final File tempOutputFile = File.createTempFile(fileNameWithoutExtension, ".mp3");
                 tempOutputFile.deleteOnExit();
 
-                final StringWriter ssmlStringWriter = new StringWriter();
-                ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
                 speechSynthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), tempOutputFile.getAbsolutePath());
 
                 final MetadataContext metadataContext = new MetadataContext();
@@ -112,6 +120,9 @@ public class TextFileProcessor {
                 System.out.printf("  => Saved audio to file: %s%n", outputFile.getName());
             }
         }
+
+        final DecimalFormat costFormatter = new DecimalFormat("$######0.00");
+        System.out.printf("Estimated cost: %s%n", costFormatter.format(totalEstimatedCost));
     }
 
     // TODO: Share this method with TextToSpeechAzureCommand.

@@ -21,8 +21,10 @@ import lilytts.processing.MetadataContext;
 import lilytts.processing.MetadataGenerator;
 import lilytts.processing.TextFileProcessor;
 import lilytts.ssml.SSMLWriter;
+import lilytts.synthesis.AzureCostEstimator;
 import lilytts.synthesis.AzureSynthesizer;
 import lilytts.synthesis.AzureVoice;
+import lilytts.synthesis.CostEstimator;
 import lilytts.synthesis.SpeechSynthesizer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -83,6 +85,7 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = configureSplitter();
         final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
+        final CostEstimator azureCostEstimator = new AzureCostEstimator();
 
         final byte[] coverImageBytes = Files.readAllBytes(coverImageFile.toPath());
         final String coverImageMimeType = Files.probeContentType(coverImageFile.toPath());
@@ -127,7 +130,7 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
             fileFilter = (file) -> true;
         }
 
-        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator);
+        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
         fileProcessor.convertTextFiles(chapterFiles, outputDirectory, fileFilter);
 
         System.out.println("Done!");

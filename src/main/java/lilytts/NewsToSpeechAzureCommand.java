@@ -25,6 +25,7 @@ import lilytts.processing.MetadataContext;
 import lilytts.processing.MetadataGenerator;
 import lilytts.processing.TextFileProcessor;
 import lilytts.ssml.SSMLWriter;
+import lilytts.synthesis.AzureCostEstimator;
 import lilytts.synthesis.AzureNewsVoice;
 import lilytts.synthesis.AzureSynthesizer;
 import lilytts.synthesis.SpeechSynthesizer;
@@ -77,6 +78,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
         final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
+        final AzureCostEstimator azureCostEstimator = new AzureCostEstimator();
 
         final List<File> articleFiles = findArticleFiles();
         final File albumTargetFolder = this.resume ? findAlbumTargetFolderToResume() : findAvailableAlbumTargetFolder();
@@ -115,7 +117,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
             }
         };
 
-        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator);
+        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
         fileProcessor.convertTextFiles(articleFiles, albumTargetFolder);
 
         if (this.archiveDirectory == null || articleFiles.isEmpty()) {
