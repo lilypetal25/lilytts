@@ -1,5 +1,6 @@
 package lilytts.synthesis;
 
+import com.microsoft.cognitiveservices.speech.CancellationErrorCode;
 import com.microsoft.cognitiveservices.speech.CancellationReason;
 import com.microsoft.cognitiveservices.speech.ResultReason;
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
@@ -36,16 +37,21 @@ public class AzureSynthesizer implements SpeechSynthesizer {
             return;
         } else if (result.getReason() == ResultReason.Canceled) {
             SpeechSynthesisCancellationDetails cancellation = SpeechSynthesisCancellationDetails.fromResult(result);
-            System.out.println("Failed to convert " + filePath);
-            System.out.println("CANCELED: Reason=" + cancellation.getReason());
+
+            final StringBuilder errorBuilder = new StringBuilder("Encountered a synthesis failure.");
+            errorBuilder.append("Failed to convert " + filePath + System.lineSeparator());
+            errorBuilder.append("CANCELED: Reason=" + cancellation.getReason() + System.lineSeparator());
 
             if (cancellation.getReason() == CancellationReason.Error) {
-                System.out.println("CANCELED: ErrorCode=" + cancellation.getErrorCode());
-                System.out.println("CANCELED: ErrorDetails=" + cancellation.getErrorDetails());
+                errorBuilder.append("CANCELED: ErrorCode=" + cancellation.getErrorCode() + System.lineSeparator());
+                errorBuilder.append("CANCELED: ErrorDetails=" + cancellation.getErrorDetails() + System.lineSeparator());
             }
 
-            // Stop execution.
-            throw new SpeechSynthesisException("Encountered a synthesis failure.");
+            if (cancellation.getErrorCode() == CancellationErrorCode.TooManyRequests) {
+                throw new SpeechSynthesisThrottledException(errorBuilder.toString());
+            } else {
+                throw new SpeechSynthesisException(errorBuilder.toString());
+            }
         } else {
             throw new SpeechSynthesisException("Unexpected result reason: " + result.getReason());
         }

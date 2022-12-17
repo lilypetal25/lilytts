@@ -7,6 +7,7 @@
 	"settings": {
 		"java.configuration.updateBuildConfiguration": "automatic",
 		"cSpell.words": [
+			"cognitiveservices",
 			"lilytts"
 		],
 		"cSpell.showAutocompleteSuggestions": false
