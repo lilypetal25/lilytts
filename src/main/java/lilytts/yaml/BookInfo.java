@@ -1,12 +1,10 @@
 package lilytts.yaml;
 
-import java.io.File;
-
 public class BookInfo {
     private String authorName;
     private String bookTitle;
     private String bookYear;
-    private File coverImageFile;
+    private String coverImageFile;
     
     public String getAuthorName() {
         return authorName;
@@ -32,11 +30,11 @@ public class BookInfo {
         this.bookYear = bookYear;
     }
 
-    public File getCoverImageFile() {
+    public String getCoverImageFile() {
         return coverImageFile;
     }
     
-    public void setCoverImageFile(File coverImageFile) {
+    public void setCoverImageFile(String coverImageFile) {
         this.coverImageFile = coverImageFile;
     }
 }

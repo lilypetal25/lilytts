@@ -224,6 +224,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         return builder.build();
     }
 
+    // TODO: Share this method with TextToSpeechAzureCommand.
     private static boolean isNullOrEmpty(String value) {
         return value == null || value.isEmpty();
     }

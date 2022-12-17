@@ -4,9 +4,9 @@ import java.util.List;
 
 public class BookConfig {
     private List<AzureSpeechConnection> azureConnections;
-    private AzureSynthesisConfig synthesis;
-    private BookInfo bookInfo;
-    private BookSourceFilesConfig files;
+    private AzureSynthesisConfig synthesis = new AzureSynthesisConfig();
+    private BookInfo bookInfo = new BookInfo();
+    private BookSourceFilesConfig files = new BookSourceFilesConfig();
 
     public List<AzureSpeechConnection> getAzureConnections() {
         return azureConnections;
@@ -35,7 +35,7 @@ public class BookConfig {
     public BookSourceFilesConfig getFiles() {
         return files;
     }
-    
+
     public void setFiles(BookSourceFilesConfig files) {
         this.files = files;
     }
