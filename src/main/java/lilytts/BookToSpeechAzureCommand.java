@@ -108,6 +108,7 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
                 metadata.setTitle(trackTitle);
                 metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
                 metadata.setAlbumImage(coverImageBytes, coverImageMimeType);
+                metadata.setYear(bookYear);
 
                 return metadata;
             }
