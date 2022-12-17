@@ -209,7 +209,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
     private void loadAndValidateYamlConfig() throws JsonMappingException, JsonProcessingException, IOException {
         final File yamlFile = new File(inputDirectory, "bookOptions.yaml");
 
-        if (!(yamlFile.exists() && yamlFile.isDirectory())) {
+        if (!(yamlFile.exists() && !yamlFile.isDirectory())) {
             throw new IllegalArgumentException("Could not find yaml config file at expected path: " + yamlFile.getAbsolutePath());
         }
 
@@ -236,7 +236,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
             throw missingYamlParam(yamlFile, "bookInfo");
         }
 
-        if (isNullOrEmpty(config.getBookInfo().getCoverImageFile())) {
+        if (isNullOrEmpty(config.getBookInfo().getCoverImage())) {
             throw missingYamlParam(yamlFile, "bookInfo.coverImage");
         }
 
@@ -246,8 +246,8 @@ public class BookToSpeechCommand implements Callable<Integer> {
 
         this.authorName = config.getBookInfo().getAuthorName();
         this.bookTitle = config.getBookInfo().getBookTitle();
-        this.bookYear = config.getBookInfo().getBookYear();
-        this.coverImageFile = new File(config.getBookInfo().getCoverImageFile());
+        this.bookYear = config.getBookInfo().getPublishedYear();
+        this.coverImageFile = new File(config.getBookInfo().getCoverImage());
 
         if (!(this.coverImageFile.exists() && this.coverImageFile.isFile())) {
             throw new IllegalArgumentException("Invalid cover image file: " + this.coverImageFile.getAbsolutePath());

@@ -3,8 +3,8 @@ package lilytts.yaml;
 public class BookInfo {
     private String authorName;
     private String bookTitle;
-    private String bookYear;
-    private String coverImageFile;
+    private String publishedYear;
+    private String coverImage;
     
     public String getAuthorName() {
         return authorName;
@@ -22,19 +22,19 @@ public class BookInfo {
         this.bookTitle = bookTitle;
     }
 
-    public String getBookYear() {
-        return bookYear;
+    public String getPublishedYear() {
+        return publishedYear;
     }
 
-    public void setBookYear(String bookYear) {
-        this.bookYear = bookYear;
+    public void setPublishedYear(String bookYear) {
+        this.publishedYear = bookYear;
     }
 
-    public String getCoverImageFile() {
-        return coverImageFile;
+    public String getCoverImage() {
+        return coverImage;
     }
     
-    public void setCoverImageFile(String coverImageFile) {
-        this.coverImageFile = coverImageFile;
+    public void setCoverImage(String coverImageFile) {
+        this.coverImage = coverImageFile;
     }
 }
