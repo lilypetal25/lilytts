@@ -1,25 +1,25 @@
 package lilytts.yaml;
 
 public class BookInfo {
-    private String authorName;
-    private String bookTitle;
+    private String author;
+    private String title;
     private String publishedYear;
     private String coverImage;
     
-    public String getAuthorName() {
-        return authorName;
+    public String getAuthor() {
+        return author;
     }
 
-    public void setAuthorName(String authorName) {
-        this.authorName = authorName;
+    public void setAuthor(String authorName) {
+        this.author = authorName;
     }
 
-    public String getBookTitle() {
-        return bookTitle;
+    public String getTitle() {
+        return title;
     }
 
-    public void setBookTitle(String bookTitle) {
-        this.bookTitle = bookTitle;
+    public void setTitle(String bookTitle) {
+        this.title = bookTitle;
     }
 
     public String getPublishedYear() {

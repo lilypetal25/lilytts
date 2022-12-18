@@ -1,35 +1,24 @@
 package lilytts.yaml;
 
-import java.util.List;
-
 public class BookConfig {
-    private List<AzureSpeechConnection> azureConnections;
-    private AzureSynthesisConfig synthesis = new AzureSynthesisConfig();
-    private BookInfo bookInfo = new BookInfo();
+    private AzureSynthesisConfig audio = new AzureSynthesisConfig();
+    private BookInfo metadata = new BookInfo();
     private BookSourceFilesConfig files = new BookSourceFilesConfig();
 
-    public List<AzureSpeechConnection> getAzureConnections() {
-        return azureConnections;
+    public AzureSynthesisConfig getAudio() {
+        return audio;
     }
 
-    public void setAzureConnections(List<AzureSpeechConnection> azureConnections) {
-        this.azureConnections = azureConnections;
+    public void setAudio(AzureSynthesisConfig synthesis) {
+        this.audio = synthesis;
     }
 
-    public AzureSynthesisConfig getSynthesis() {
-        return synthesis;
+    public BookInfo getMetadata() {
+        return metadata;
     }
 
-    public void setSynthesis(AzureSynthesisConfig synthesis) {
-        this.synthesis = synthesis;
-    }
-
-    public BookInfo getBookInfo() {
-        return bookInfo;
-    }
-
-    public void setBookInfo(BookInfo bookInfo) {
-        this.bookInfo = bookInfo;
+    public void setMetadata(BookInfo bookInfo) {
+        this.metadata = bookInfo;
     }
 
     public BookSourceFilesConfig getFiles() {

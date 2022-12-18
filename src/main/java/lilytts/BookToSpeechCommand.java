@@ -36,6 +36,7 @@ import lilytts.synthesis.SpeechSynthesizer;
 import lilytts.yaml.AzureSpeechConnection;
 import lilytts.yaml.AzureSynthesisConfig;
 import lilytts.yaml.BookConfig;
+import lilytts.yaml.TextToSpeechConfig;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -73,7 +74,8 @@ public class BookToSpeechCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
-        loadAndValidateYamlConfig();
+        loadTextToSpeechConfig();
+        loadBookConfig();
 
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
@@ -215,8 +217,36 @@ public class BookToSpeechCommand implements Callable<Integer> {
         }
     }
 
-    private void loadAndValidateYamlConfig() throws JsonMappingException, JsonProcessingException, IOException {
-        final File yamlFile = new File(inputDirectory, "bookOptions.yaml");
+    private void loadTextToSpeechConfig() throws JsonMappingException, JsonProcessingException, IOException {
+        final File yamlFile = new File(getUserHomeDirectory(), ".lilytts.yaml");
+
+        if (!(yamlFile.exists() && !yamlFile.isDirectory())) {
+            throw new IllegalArgumentException("Could not find yaml config file at expected path: " + yamlFile.getAbsolutePath());
+        }
+
+        final ObjectMapper yamlMapper = YAMLMapper.builder().build();
+        TextToSpeechConfig config = yamlMapper.readValue(Files.readString(yamlFile.toPath()), TextToSpeechConfig.class);
+
+        // Validate azure connection info.
+        if (config.getAzureConnections() == null || config.getAzureConnections().size() < 1) {
+            throw missingYamlParam(yamlFile, "azureConnections");
+        }
+
+        config.getAzureConnections().stream().forEach(x -> {
+            if (isNullOrEmpty(x.getServiceRegion())) {
+                throw missingYamlParam(yamlFile, "azureConnections.serviceRegion");
+            }
+
+            if (isNullOrEmpty(x.getSubscriptionKey())) {
+                throw missingYamlParam(yamlFile, "azureConnections.subscriptionKey");
+            }
+        });
+
+        this.configuredSpeechConnections = config.getAzureConnections();
+    }
+
+    private void loadBookConfig() throws JsonMappingException, JsonProcessingException, IOException {
+        final File yamlFile = new File(inputDirectory, "book.yaml");
 
         if (!(yamlFile.exists() && !yamlFile.isDirectory())) {
             throw new IllegalArgumentException("Could not find yaml config file at expected path: " + yamlFile.getAbsolutePath());
@@ -225,37 +255,30 @@ public class BookToSpeechCommand implements Callable<Integer> {
         final ObjectMapper yamlMapper = YAMLMapper.builder().build();
         BookConfig config = yamlMapper.readValue(Files.readString(yamlFile.toPath()), BookConfig.class);
 
-        // Parse azure connection info.
-        if (config.getAzureConnections() == null || config.getAzureConnections().size() < 1) {
-            throw missingYamlParam(yamlFile, "azureConnections");
-        }
-
-        this.configuredSpeechConnections = config.getAzureConnections();
-
         // Parse settings about how to generate the audio for the book.
-        final Optional<AzureSynthesisConfig> synthesisConfig = Optional.of(config.getSynthesis());
+        final Optional<AzureSynthesisConfig> synthesisConfig = Optional.of(config.getAudio());
         this.voice = synthesisConfig.map(x -> x.getVoice()).orElse(DEFAULT_VOICE);
         this.maxPartCharacters = synthesisConfig.map(x -> x.getMaxPartCharacters()).orElse(DEFAULT_MAX_PART_CHARACTERS);
         this.prosodyRate = synthesisConfig.map(x -> x.getProsodyRate()).orElse(DEFAULT_PROSODY_RATE);
         this.pitch = synthesisConfig.map(x -> x.getPitch()).orElse(DEFAULT_PITCH);
 
         // Parse info about the book being converted.
-        if (config.getBookInfo() == null) {
+        if (config.getMetadata() == null) {
             throw missingYamlParam(yamlFile, "bookInfo");
         }
 
-        if (isNullOrEmpty(config.getBookInfo().getCoverImage())) {
+        if (isNullOrEmpty(config.getMetadata().getCoverImage())) {
             throw missingYamlParam(yamlFile, "bookInfo.coverImage");
         }
 
-        if (isNullOrEmpty(config.getBookInfo().getBookTitle())) {
+        if (isNullOrEmpty(config.getMetadata().getTitle())) {
             throw missingYamlParam(yamlFile, "bookInfo.bookTitle");
         }
 
-        this.authorName = config.getBookInfo().getAuthorName();
-        this.bookTitle = config.getBookInfo().getBookTitle();
-        this.bookYear = config.getBookInfo().getPublishedYear();
-        this.coverImageFile = new File(config.getBookInfo().getCoverImage());
+        this.authorName = config.getMetadata().getAuthor();
+        this.bookTitle = config.getMetadata().getTitle();
+        this.bookYear = config.getMetadata().getPublishedYear();
+        this.coverImageFile = new File(config.getMetadata().getCoverImage());
 
         if (!(this.coverImageFile.exists() && this.coverImageFile.isFile())) {
             throw new IllegalArgumentException("Invalid cover image file: " + this.coverImageFile.getAbsolutePath());
@@ -271,5 +294,10 @@ public class BookToSpeechCommand implements Callable<Integer> {
 
     private static boolean isNullOrEmpty(String value) {
         return value == null || value.isEmpty();
+    }
+
+    // TODO: Move this method to a shared location.
+    private static File getUserHomeDirectory() {
+        return new File(System.getProperty("user.home"));
     }
 }
