@@ -30,8 +30,10 @@ import lilytts.ssml.SSMLWriter;
 import lilytts.synthesis.AzureCostEstimator;
 import lilytts.synthesis.AzureSynthesizer;
 import lilytts.synthesis.AzureVoice;
+import lilytts.synthesis.CompoundSynthesizer;
 import lilytts.synthesis.CostEstimator;
 import lilytts.synthesis.SpeechSynthesizer;
+import lilytts.yaml.AzureSpeechConnection;
 import lilytts.yaml.AzureSynthesisConfig;
 import lilytts.yaml.BookConfig;
 import picocli.CommandLine.Command;
@@ -57,8 +59,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
     @Option(names = { "--pretend", "-n" } )
     private boolean pretend = false;
 
-    private String subscriptionKey;
-    private String serviceRegion;
+    private List<AzureSpeechConnection> configuredSpeechConnections;
     private AzureVoice voice;
     private int maxPartCharacters;
     private int prosodyRate;
@@ -77,7 +78,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = configureSplitter();
-        final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
+        final SpeechSynthesizer synthesizer = configureSynthesizer();
         final CostEstimator azureCostEstimator = new AzureCostEstimator();
 
         final byte[] coverImageBytes = Files.readAllBytes(coverImageFile.toPath());
@@ -129,6 +130,14 @@ public class BookToSpeechCommand implements Callable<Integer> {
 
         System.out.println("Done!");
         return 0;
+    }
+
+    private SpeechSynthesizer configureSynthesizer() {
+        List<AzureSynthesizer> synthesizers = this.configuredSpeechConnections.stream()
+            .map(x -> AzureSynthesizer.fromSubscription(x.getSubscriptionKey(), x.getServiceRegion()))
+            .toList();
+        
+        return CompoundSynthesizer.tryInPriorityOrder(synthesizers);
     }
 
     private List<File> findChapterFiles() {
@@ -221,8 +230,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
             throw missingYamlParam(yamlFile, "azureConnections");
         }
 
-        this.serviceRegion = config.getAzureConnections().get(0).getServiceRegion();
-        this.subscriptionKey = config.getAzureConnections().get(0).getSubscriptionKey();
+        this.configuredSpeechConnections = config.getAzureConnections();
 
         // Parse settings about how to generate the audio for the book.
         final Optional<AzureSynthesisConfig> synthesisConfig = Optional.of(config.getSynthesis());
