@@ -1,0 +1,78 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "$id": "https://example.com/product.schema.json",
+    "title": "Book Text-to-Speech Metadata",
+    "description": "Describes how to convert a set of text files into an audiobook",
+    "type": "object",
+    "properties": {
+      "audio": {
+        "description": "Speech synthesis settings",
+        "type": "object",
+        "properties": {
+            "voice": {
+                "description": "The identifier of the Azure voice to use",
+                "type": "string",
+                "enum": ["Aria", "Brandon", "Christopher", "Cora", "Eric", "Jenny", "Libby", "Sara", "Jacob"]
+            },
+            "maxPartCharacters": {
+                "description": "The maximum size, in text characters, of an individual MP3 file",
+                "type": "integer",
+                "minimum": 100
+            },
+            "prosodyRate": {
+                "description": "A positive or negative number representing the % by which the speech speed should be increased or decreased compared to the default",
+                "type": "integer",
+                "minimum": -50,
+                "maximum": 50
+            },
+            "pitch": {
+                "description": "A positive or negative number representing the % by which the speech pitch should be raised or lowered compared to the default",
+                "type": "integer",
+                "minimum": -50,
+                "maximum": 50
+            }
+        }
+      },
+      "metadata": {
+        "description": "Metadata to include in the MP3 tags for this audiobook",
+        "type": "object",
+        "properties": {
+            "author": {
+                "description": "The name of the author of this book",
+                "type": "string",
+                "minLength": 2
+            },
+            "title": {
+                "description": "The title of this book",
+                "type": "string",
+                "minLength": 2
+            },
+            "publishedYear": {
+                "description": "The year in which this book was published",
+                "type": "string",
+                "minLength": 2
+            },
+            "coverImage": {
+                "description": "A relative path to an image file representing the cover of this book",
+                "type": "string",
+                "minLength": 2
+            }
+        },
+        "required": ["author", "title", "publishedYear", "coverImage"]
+      },
+      "files": {
+        "description": "Settings describing how to find the text files used as the source text for this book",
+        "type": "object",
+        "properties": {
+            "ignoreFiles": {
+                "description": "A list of relative paths to text files which should be excluded when generating audio",
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        }
+      }
+    },
+    "required": [ "metadata" ]
+  }

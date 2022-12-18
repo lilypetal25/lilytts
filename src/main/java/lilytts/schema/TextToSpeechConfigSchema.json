@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "$id": "https://example.com/product.schema.json",
+    "title": "LilyTTS Configuration",
+    "description": "Configures global settings for speech synthesis using LilyTTS",
+    "type": "object",
+    "properties": {
+      "azureConnections": {
+        "description": "A list of connections to use for the Azure speech service",
+        "type": "array",
+        "minItems": 1,
+        "items": {
+            "description": "Connection details for an Azure speech service endpoint",
+            "type": "object",
+            "properties": {
+                "serviceRegion": {
+                    "description": "The identifier for the azure region containing the service",
+                    "type": "string"
+                },
+                "subscriptionKey": {
+                    "description": "The connection key for this azure speech service instance",
+                    "type": "string"
+                }
+            },
+            "required": ["serviceRegion", "subscriptionKey"]
+        }
+      }
+    },
+    "required": [ "azureConnections" ]
+  }

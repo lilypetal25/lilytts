@@ -285,7 +285,12 @@ public class BookToSpeechCommand implements Callable<Integer> {
         }
 
         // Parse info about which files contain the audio to generate.
-        this.ignoreFiles = Optional.of(config.getFiles()).map(x -> x.getIgnoreFiles()).orElse(Collections.emptyList());
+        this.ignoreFiles = Optional.of(config.getFiles())
+            .map(x -> x.getIgnoreFiles())
+            .orElse(Collections.emptyList())
+            .stream()
+            .map(path -> new File(yamlFile.getParentFile(), path))
+            .toList();
     }
 
     private static IllegalArgumentException missingYamlParam(File yamlFile, String propertyName) {
