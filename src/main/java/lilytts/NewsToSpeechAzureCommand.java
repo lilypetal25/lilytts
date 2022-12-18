@@ -77,7 +77,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
         final ContentParser contentParser = TextContentParser.builder().setRecognizeArticlePublisher(true).build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
-        final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
+        final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription("Azure speech service", subscriptionKey, serviceRegion);
         final AzureCostEstimator azureCostEstimator = new AzureCostEstimator();
 
         final List<File> articleFiles = findArticleFiles();

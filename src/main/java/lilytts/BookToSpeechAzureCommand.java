@@ -84,7 +84,7 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = configureSplitter();
-        final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription(subscriptionKey, serviceRegion);
+        final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription("Azure speech service", subscriptionKey, serviceRegion);
         final CostEstimator azureCostEstimator = new AzureCostEstimator();
 
         final byte[] coverImageBytes = Files.readAllBytes(coverImageFile.toPath());

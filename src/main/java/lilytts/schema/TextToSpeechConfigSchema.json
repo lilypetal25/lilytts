@@ -13,6 +13,11 @@
             "description": "Connection details for an Azure speech service endpoint",
             "type": "object",
             "properties": {
+                "displayName": {
+                  "description": "A name for this connection, used for debugging",
+                  "type": "string",
+                  "minLength": 2
+                },
                 "serviceRegion": {
                     "description": "The identifier for the azure region containing the service",
                     "type": "string"
@@ -22,7 +27,7 @@
                     "type": "string"
                 }
             },
-            "required": ["serviceRegion", "subscriptionKey"]
+            "required": ["displayName", "serviceRegion", "subscriptionKey"]
         }
       }
     },

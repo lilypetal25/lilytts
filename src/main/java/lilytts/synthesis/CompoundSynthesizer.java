@@ -1,6 +1,7 @@
 package lilytts.synthesis;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CompoundSynthesizer implements SpeechSynthesizer {
     public static CompoundSynthesizer tryInPriorityOrder(List<? extends SpeechSynthesizer> synthesizers) {
@@ -18,21 +19,28 @@ public class CompoundSynthesizer implements SpeechSynthesizer {
         this.speechSynthesizers = speechSynthesizers;
     }
 
+    public String getDisplayName() {
+        return "Compound synthesizer: " + this.speechSynthesizers.stream().map(x -> x.getDisplayName()).collect(Collectors.joining(", "));
+    }
+
     public void synthesizeSsmlToFile(String ssml, String filePath) throws SpeechSynthesisException {
         while (true) {
             if (this.speechSynthesizers.size() <= currentSynthesizerIndex) {
                 throw new IllegalStateException("Ran out of speech synthesizers to try.");
             }
 
+            final SpeechSynthesizer currentSynthesizer = this.speechSynthesizers.get(currentSynthesizerIndex);
+
             try {
-                this.speechSynthesizers.get(currentSynthesizerIndex).synthesizeSsmlToFile(ssml, filePath);
+                currentSynthesizer.synthesizeSsmlToFile(ssml, filePath);
             } catch (SpeechSynthesisThrottledException exception) {
                 this.currentSynthesizerIndex++;
 
                 if (this.speechSynthesizers.size() <= currentSynthesizerIndex) {
                     throw exception;
                 } else {
-                    System.out.println("Speech synthesis request was throttled on synthesizer " + (this.currentSynthesizerIndex + 1) + ". Switching to synthesizer " + this.currentSynthesizerIndex + ".");
+                    final SpeechSynthesizer nexSynthesizer = this.speechSynthesizers.get(currentSynthesizerIndex);
+                    System.out.println("Speech synthesis request was throttled on synthesizer [" + currentSynthesizer.getDisplayName() + "]. Switching to synthesizer [" + nexSynthesizer.getDisplayName() + "].");
                 }
             }
         }

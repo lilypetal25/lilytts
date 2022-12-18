@@ -10,17 +10,23 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesisResult;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 public class AzureSynthesizer implements SpeechSynthesizer {
+    private final String displayName;
     private final SpeechConfig speechConfig;
 
-    public static AzureSynthesizer fromSubscription(String subscriptionKey, String serviceRegion) {
+    public static AzureSynthesizer fromSubscription(String displayName, String subscriptionKey, String serviceRegion) {
         SpeechConfig config = SpeechConfig.fromSubscription(subscriptionKey, serviceRegion);
         config.setSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3);
 
-        return new AzureSynthesizer(config);
+        return new AzureSynthesizer(displayName, config);
     }
 
-    private AzureSynthesizer(SpeechConfig speechConfig) {
+    private AzureSynthesizer(String displayName, SpeechConfig speechConfig) {
+        this.displayName = displayName;
         this.speechConfig = speechConfig;
+    }
+
+    public String getDisplayName() {
+        return this.displayName;
     }
 
     public void synthesizeSsmlToFile(String ssml, String filePath) throws SpeechSynthesisException {

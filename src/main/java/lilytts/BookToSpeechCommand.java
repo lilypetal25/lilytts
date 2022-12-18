@@ -136,7 +136,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
 
     private SpeechSynthesizer configureSynthesizer() {
         List<AzureSynthesizer> synthesizers = this.configuredSpeechConnections.stream()
-            .map(x -> AzureSynthesizer.fromSubscription(x.getSubscriptionKey(), x.getServiceRegion()))
+            .map(x -> AzureSynthesizer.fromSubscription(x.getDisplayName(), x.getSubscriptionKey(), x.getServiceRegion()))
             .toList();
         
         return CompoundSynthesizer.tryInPriorityOrder(synthesizers);
