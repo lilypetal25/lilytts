@@ -28,15 +28,11 @@ import lilytts.processing.MetadataGenerator;
 import lilytts.processing.TextFileProcessor;
 import lilytts.ssml.SSMLWriter;
 import lilytts.synthesis.AzureCostEstimator;
-import lilytts.synthesis.AzureSynthesizer;
 import lilytts.synthesis.AzureVoice;
-import lilytts.synthesis.CompoundSynthesizer;
 import lilytts.synthesis.CostEstimator;
 import lilytts.synthesis.SpeechSynthesizer;
-import lilytts.yaml.AzureSpeechConnection;
 import lilytts.yaml.AzureSynthesisConfig;
 import lilytts.yaml.BookConfig;
-import lilytts.yaml.TextToSpeechConfig;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -60,7 +56,6 @@ public class BookToSpeechCommand implements Callable<Integer> {
     @Option(names = { "--pretend", "-n" } )
     private boolean pretend = false;
 
-    private List<AzureSpeechConnection> configuredSpeechConnections;
     private AzureVoice voice;
     private int maxPartCharacters;
     private int prosodyRate;
@@ -74,13 +69,14 @@ public class BookToSpeechCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
-        loadTextToSpeechConfig();
         loadBookConfig();
+
+        final GlobalConfigHelper configHelper = new GlobalConfigHelper();
 
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = configureSplitter();
-        final SpeechSynthesizer synthesizer = configureSynthesizer();
+        final SpeechSynthesizer synthesizer = configHelper.setupSpeechSynthesizerFromGlobalConfig();
         final CostEstimator azureCostEstimator = new AzureCostEstimator();
 
         final byte[] coverImageBytes = Files.readAllBytes(coverImageFile.toPath());
@@ -132,14 +128,6 @@ public class BookToSpeechCommand implements Callable<Integer> {
 
         System.out.println("Done!");
         return 0;
-    }
-
-    private SpeechSynthesizer configureSynthesizer() {
-        List<AzureSynthesizer> synthesizers = this.configuredSpeechConnections.stream()
-            .map(x -> AzureSynthesizer.fromSubscription(x.getDisplayName(), x.getSubscriptionKey(), x.getServiceRegion()))
-            .toList();
-        
-        return CompoundSynthesizer.tryInPriorityOrder(synthesizers);
     }
 
     private List<File> findChapterFiles() {
@@ -217,34 +205,6 @@ public class BookToSpeechCommand implements Callable<Integer> {
         }
     }
 
-    private void loadTextToSpeechConfig() throws JsonMappingException, JsonProcessingException, IOException {
-        final File yamlFile = new File(getUserHomeDirectory(), ".lilytts.yaml");
-
-        if (!(yamlFile.exists() && !yamlFile.isDirectory())) {
-            throw new IllegalArgumentException("Could not find yaml config file at expected path: " + yamlFile.getAbsolutePath());
-        }
-
-        final ObjectMapper yamlMapper = YAMLMapper.builder().build();
-        TextToSpeechConfig config = yamlMapper.readValue(Files.readString(yamlFile.toPath()), TextToSpeechConfig.class);
-
-        // Validate azure connection info.
-        if (config.getAzureConnections() == null || config.getAzureConnections().size() < 1) {
-            throw missingYamlParam(yamlFile, "azureConnections");
-        }
-
-        config.getAzureConnections().stream().forEach(x -> {
-            if (isNullOrEmpty(x.getServiceRegion())) {
-                throw missingYamlParam(yamlFile, "azureConnections.serviceRegion");
-            }
-
-            if (isNullOrEmpty(x.getSubscriptionKey())) {
-                throw missingYamlParam(yamlFile, "azureConnections.subscriptionKey");
-            }
-        });
-
-        this.configuredSpeechConnections = config.getAzureConnections();
-    }
-
     private void loadBookConfig() throws JsonMappingException, JsonProcessingException, IOException {
         final File yamlFile = new File(inputDirectory, "book.yaml");
 
@@ -299,10 +259,5 @@ public class BookToSpeechCommand implements Callable<Integer> {
 
     private static boolean isNullOrEmpty(String value) {
         return value == null || value.isEmpty();
-    }
-
-    // TODO: Move this method to a shared location.
-    private static File getUserHomeDirectory() {
-        return new File(System.getProperty("user.home"));
     }
 }

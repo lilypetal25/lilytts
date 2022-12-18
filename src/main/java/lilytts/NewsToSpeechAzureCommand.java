@@ -27,7 +27,6 @@ import lilytts.processing.TextFileProcessor;
 import lilytts.ssml.SSMLWriter;
 import lilytts.synthesis.AzureCostEstimator;
 import lilytts.synthesis.AzureNewsVoice;
-import lilytts.synthesis.AzureSynthesizer;
 import lilytts.synthesis.SpeechSynthesizer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -42,12 +41,6 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
     @Parameters(index = "1")
     private File outputDirectory;
-
-    @Option(names = { "--subscriptionKey" }, required = true)
-    private String subscriptionKey;
-
-    @Option(names = { "--serviceRegion" }, required = true)
-    private String serviceRegion;
 
     @Option(names = { "--voice" })
     private AzureNewsVoice voice = AzureNewsVoice.AriaCasual;
@@ -74,10 +67,12 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         validateCommandLineParameters();
 
+        final GlobalConfigHelper configHelper = new GlobalConfigHelper();
+
         final ContentParser contentParser = TextContentParser.builder().setRecognizeArticlePublisher(true).build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
         final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(9000).build();
-        final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription("Azure speech service", subscriptionKey, serviceRegion);
+        final SpeechSynthesizer synthesizer = configHelper.setupSpeechSynthesizerFromGlobalConfig();
         final AzureCostEstimator azureCostEstimator = new AzureCostEstimator();
 
         final List<File> articleFiles = findArticleFiles();
