@@ -49,8 +49,16 @@
             },
             "publishedYear": {
                 "description": "The year in which this book was published",
-                "type": "string",
-                "minLength": 2
+                "anyOf": [
+                    {
+                        "type": "integer",
+                        "minimum": 1
+                    }, 
+                    {
+                        "type": "string",
+                        "minLength": 2
+                    }
+                ]
             },
             "coverImage": {
                 "description": "A relative path to an image file representing the cover of this book",
