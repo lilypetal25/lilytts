@@ -51,10 +51,6 @@ public class TextFileProcessor {
     }
 
     public void convertTextFiles(final List<File> textFiles, final File targetFolder, final Predicate<File> fileFilter) throws SpeechSynthesisException, SSMLWritingException, IOException, XMLStreamException {
-        if (!targetFolder.exists() && !targetFolder.mkdirs()) {
-            throw new RuntimeException("Unable to create directory: " + targetFolder.getPath());
-        }
-
         int partsProcessed = -1;
         double totalEstimatedCost = 0.0;
 
@@ -91,6 +87,11 @@ public class TextFileProcessor {
                 if (!fileFilter.test(textFile)) {
                     System.out.printf("  => Skipping file.%n", outputFile.getName());
                     continue;
+                }
+
+                // Ensure target folder exists now that we've found at least one file to convert.
+                if (!targetFolder.exists() && !targetFolder.mkdirs()) {
+                    throw new RuntimeException("Unable to create directory: " + targetFolder.getPath());
                 }
 
                 final File tempOutputFile = File.createTempFile(fileNameWithoutExtension, ".mp3");

@@ -7,13 +7,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
-import java.util.function.Predicate;
 
 import com.mpatric.mp3agic.ID3v24Tag;
 
@@ -67,6 +66,9 @@ public class NewsToSpeechCommand implements Callable<Integer> {
     @Option(names = { "--pretend", "-n" } )
     private boolean pretend = false;
 
+    @Option(names = { "--ignore" } )
+    private List<File> ignoreFiles = Collections.emptyList();
+
     @Override
     public Integer call() throws Exception {
         validateCommandLineParameters();
@@ -90,6 +92,7 @@ public class NewsToSpeechCommand implements Callable<Integer> {
         System.out.printf("Album name: %s%n", albumName);
         System.out.printf("Output directory: %s%n", albumTargetFolder.getPath());
         System.out.printf("Found %d articles to convert.%n", articleFiles.size());
+        System.out.printf("Speech synthesizer: %s%n", synthesizer.getDisplayName());
 
         final MetadataGenerator metadataGenerator = new MetadataGenerator() {
             public ID3v24Tag generateMetadata(MetadataContext context) {
@@ -116,14 +119,10 @@ public class NewsToSpeechCommand implements Callable<Integer> {
             }
         };
 
-        Predicate<File> fileFilter = this.pretend ?
-            (file) -> false :
-            (file) -> true;
-
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
-        fileProcessor.convertTextFiles(articleFiles, albumTargetFolder, fileFilter);
+        fileProcessor.convertTextFiles(articleFiles, albumTargetFolder, (file) -> !this.pretend);
 
-        if (this.archiveDirectory == null || articleFiles.isEmpty()) {
+        if (this.pretend || this.archiveDirectory == null || articleFiles.isEmpty()) {
             return 0;
         }
 
@@ -248,13 +247,20 @@ public class NewsToSpeechCommand implements Callable<Integer> {
         if (this.inputDirectoryOrFile.isDirectory()) {
             System.out.printf("Input directory: %s%n", this.inputDirectoryOrFile.getPath());
 
-            final List<File> results = new ArrayList<>();
-
-            for (File folder : inputDirectoryOrFile.listFiles(x -> x.isDirectory())) {
-                for (File textFile : folder.listFiles(x -> x.getName().endsWith(".txt"))) {
-                    results.add(textFile);
+            final List<File> results = Arrays.asList(this.inputDirectoryOrFile.listFiles(file -> {
+                // Only match *.txt files.
+                if (!file.getName().endsWith(".txt")) {
+                    return false;
                 }
-            }
+    
+                // Ignore files in the ignore list.
+                // TODO: Implement a compare file helper method to share the code for comparing files by absolute path.
+                if (this.ignoreFiles.stream().anyMatch(ignored -> ignored.getAbsoluteFile().equals(file.getAbsoluteFile()))) {
+                    return false;
+                }
+    
+                return true;
+            }));
 
             // Sort files by creation time, from first created to last created.
             Collections.sort(results, (file1, file2) -> {
