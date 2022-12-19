@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
+import java.util.function.Predicate;
 
 import com.mpatric.mp3agic.ID3v24Tag;
 
@@ -34,8 +35,8 @@ import picocli.CommandLine.Parameters;
 
 import static lilytts.StringUtil.substringBefore;
 
-@Command(name = "news-to-speech-azure")
-public class NewsToSpeechAzureCommand implements Callable<Integer> {
+@Command(name = "news-to-speech")
+public class NewsToSpeechCommand implements Callable<Integer> {
     @Parameters(index = "0")
     private File inputDirectoryOrFile;
 
@@ -62,6 +63,9 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
     @Option(names = { "--albumArtist" })
     private String albumArtist = null;
+
+    @Option(names = { "--pretend", "-n" } )
+    private boolean pretend = false;
 
     @Override
     public Integer call() throws Exception {
@@ -103,7 +107,7 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
 
                 final ID3v24Tag metadata = new ID3v24Tag();
                 metadata.setArtist(publisher);
-                metadata.setAlbumArtist(NewsToSpeechAzureCommand.this.albumArtist != null ? NewsToSpeechAzureCommand.this.albumArtist : "News Deep Dive");
+                metadata.setAlbumArtist(NewsToSpeechCommand.this.albumArtist != null ? NewsToSpeechCommand.this.albumArtist : "News Deep Dive");
                 metadata.setAlbum(albumName);
                 metadata.setTitle(articleName);
                 metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
@@ -112,8 +116,12 @@ public class NewsToSpeechAzureCommand implements Callable<Integer> {
             }
         };
 
+        Predicate<File> fileFilter = this.pretend ?
+            (file) -> false :
+            (file) -> true;
+
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
-        fileProcessor.convertTextFiles(articleFiles, albumTargetFolder);
+        fileProcessor.convertTextFiles(articleFiles, albumTargetFolder, fileFilter);
 
         if (this.archiveDirectory == null || articleFiles.isEmpty()) {
             return 0;

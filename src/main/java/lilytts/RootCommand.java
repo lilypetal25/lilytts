@@ -9,7 +9,7 @@ import picocli.CommandLine.Command;
     BookToSpeechCommand.class,
     BookToSpeechAzureCommand.class,
     MergeLinesCommand.class,
-    NewsToSpeechAzureCommand.class,
+    NewsToSpeechCommand.class,
     FindArticlesCommand.class
 })
 public class RootCommand implements Callable<Integer> {
