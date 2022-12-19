@@ -20,7 +20,7 @@ public class CompoundSynthesizer implements SpeechSynthesizer {
     }
 
     public String getDisplayName() {
-        return "Compound synthesizer: " + this.speechSynthesizers.stream().map(x -> x.getDisplayName()).collect(Collectors.joining(", "));
+        return this.speechSynthesizers.stream().map(x -> x.getDisplayName()).collect(Collectors.joining(", "));
     }
 
     public void synthesizeSsmlToFile(String ssml, String filePath) throws SpeechSynthesisException {
