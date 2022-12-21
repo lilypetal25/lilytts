@@ -9,7 +9,8 @@ public enum AzureVoice {
     Jenny("en-US-JennyNeural"),
     Libby("en-GB-LibbyNeural"),
     Sara("en-US-SaraNeural"),
-    Jacob("en-US-JacobNeural");
+    Jacob("en-US-JacobNeural"),
+    Jane("en-US-JaneNeural");
 
     private final String voiceName;
 
