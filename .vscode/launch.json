@@ -10,14 +10,8 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": [
-                "book-to-speech-azure",
-                "/Users/lily/Library/CloudStorage/OneDrive-Personal/Book workspace/Chapters",
-                "/Users/lily/Library/CloudStorage/OneDrive-Personal/Book workspace/Audio",
-                "--only",
-                "/Users/lily/Library/CloudStorage/OneDrive-Personal/Book workspace/Chapters/Preface.txt",
-                "@/Users/lily/Library/CloudStorage/OneDrive-Personal/Book workspace/arguments.args"
-            ]
+            "args": "book-to-speech '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash' '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash' --only '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash/Front Matter.txt'",
+            "cwd": "/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash"
         },
         {
             "type": "java",

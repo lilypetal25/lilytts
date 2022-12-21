@@ -33,6 +33,7 @@ public class CompoundSynthesizer implements SpeechSynthesizer {
 
             try {
                 currentSynthesizer.synthesizeSsmlToFile(ssml, filePath);
+                return;
             } catch (SpeechSynthesisThrottledException exception) {
                 this.currentSynthesizerIndex++;
 
