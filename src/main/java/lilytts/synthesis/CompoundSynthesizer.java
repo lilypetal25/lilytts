@@ -41,7 +41,7 @@ public class CompoundSynthesizer implements SpeechSynthesizer {
                     throw exception;
                 } else {
                     final SpeechSynthesizer nexSynthesizer = this.speechSynthesizers.get(currentSynthesizerIndex);
-                    System.out.println("Speech synthesis request was throttled on synthesizer [" + currentSynthesizer.getDisplayName() + "]. Switching to synthesizer [" + nexSynthesizer.getDisplayName() + "].");
+                    System.out.println("Speech synthesis request was throttled on " + currentSynthesizer.getDisplayName() + ". Switching to " + nexSynthesizer.getDisplayName() + ".");
                 }
             }
         }

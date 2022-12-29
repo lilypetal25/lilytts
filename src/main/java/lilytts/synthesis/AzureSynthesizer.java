@@ -1,5 +1,7 @@
 package lilytts.synthesis;
 
+import java.util.regex.Pattern;
+
 import com.microsoft.cognitiveservices.speech.CancellationErrorCode;
 import com.microsoft.cognitiveservices.speech.CancellationReason;
 import com.microsoft.cognitiveservices.speech.ResultReason;
@@ -10,6 +12,8 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesisResult;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 public class AzureSynthesizer implements SpeechSynthesizer {
+    private static final Pattern REQUEST_THROTTLED_MESSAGE_PATTERN = Pattern.compile(".+The request is throttled because you have exceeded.+", Pattern.CASE_INSENSITIVE);
+
     private final String displayName;
     private final SpeechConfig speechConfig;
 
@@ -46,14 +50,14 @@ public class AzureSynthesizer implements SpeechSynthesizer {
 
             final StringBuilder errorBuilder = new StringBuilder("Encountered a synthesis failure.");
             errorBuilder.append("Failed to convert " + filePath + System.lineSeparator());
-            errorBuilder.append("CANCELED: Reason=" + cancellation.getReason() + System.lineSeparator());
+            errorBuilder.append("Reason: " + cancellation.getReason() + System.lineSeparator());
 
             if (cancellation.getReason() == CancellationReason.Error) {
-                errorBuilder.append("CANCELED: ErrorCode=" + cancellation.getErrorCode() + System.lineSeparator());
-                errorBuilder.append("CANCELED: ErrorDetails=" + cancellation.getErrorDetails() + System.lineSeparator());
+                errorBuilder.append("ErrorCode: " + cancellation.getErrorCode() + System.lineSeparator());
+                errorBuilder.append("ErrorDetails: " + cancellation.getErrorDetails() + System.lineSeparator());
             }
 
-            if (cancellation.getErrorCode() == CancellationErrorCode.TooManyRequests) {
+            if (isThrottlingError(cancellation)) {
                 throw new SpeechSynthesisThrottledException(errorBuilder.toString());
             } else {
                 throw new SpeechSynthesisException(errorBuilder.toString());
@@ -61,5 +65,11 @@ public class AzureSynthesizer implements SpeechSynthesizer {
         } else {
             throw new SpeechSynthesisException("Unexpected result reason: " + result.getReason());
         }
+    }
+
+    private static boolean isThrottlingError(SpeechSynthesisCancellationDetails cancellation) {
+        return cancellation.getReason() == CancellationReason.Error
+            && cancellation.getErrorCode() == CancellationErrorCode.ConnectionFailure
+            && REQUEST_THROTTLED_MESSAGE_PATTERN.matcher(cancellation.getErrorDetails()).matches();
     }
 }
