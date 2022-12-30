@@ -19,6 +19,7 @@ import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.NotSupportedException;
 import com.mpatric.mp3agic.UnsupportedTagException;
 
+import lilytts.StringUtil;
 import lilytts.content.ContentItem;
 import lilytts.parsing.ContentParser;
 import lilytts.ssml.SSMLWriter;
@@ -68,7 +69,7 @@ public class TextFileProcessor {
             for (int i = 0; i < parts.size(); i++) {
                 partsProcessed++;
 
-                final String fileNameWithoutExtension = removeFileExtension(textFile.getName());
+                final String fileNameWithoutExtension = StringUtil.removeFileExtension(textFile.getName());
                 final String outputFileName = parts.size() > 1
                         ? fileNameWithoutExtension + " (Part " + (i + 1) + ").mp3"
                         : fileNameWithoutExtension + ".mp3";
@@ -124,16 +125,5 @@ public class TextFileProcessor {
 
         final DecimalFormat costFormatter = new DecimalFormat("$######0.00");
         System.out.printf("Estimated cost: %s%n", costFormatter.format(totalEstimatedCost));
-    }
-
-    // TODO: Share this method with TextToSpeechAzureCommand.
-    private static String removeFileExtension(String fileName) {
-        final int index = fileName.lastIndexOf('.');
-
-        if (index >= 0) {
-            return fileName.substring(0, index);
-        } else {
-            return fileName;
-        }
     }
 }

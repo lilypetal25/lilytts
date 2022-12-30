@@ -96,7 +96,7 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
                     .filter(x -> x instanceof ChapterTitleContent)
                     .map(x -> ((ChapterTitleContent) x).getContent())
                     .findFirst()
-                    .orElseGet(() -> removeFileExtension(context.getSourceFile().getName()));
+                    .orElseGet(() -> StringUtil.removeFileExtension(context.getSourceFile().getName()));
 
                 final String trackTitle = context.getPartsInFile() == 1 ?
                     chapterTitle :
@@ -154,8 +154,8 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         );
 
         chapterFiles.sort((file1, file2) -> {
-            final String file1Key = removeFileExtension(file1.getName()).toLowerCase();
-            final String file2Key = removeFileExtension(file2.getName()).toLowerCase();
+            final String file1Key = StringUtil.removeFileExtension(file1.getName()).toLowerCase();
+            final String file2Key = StringUtil.removeFileExtension(file2.getName()).toLowerCase();
 
             final int file1Weighting = weightingsByName.getOrDefault(file1Key, 0);
             final int file2Weighting = weightingsByName.getOrDefault(file2Key, 0);
@@ -204,16 +204,6 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
 
         if (!(coverImageFile.exists() && coverImageFile.isFile())) {
             throw new IllegalArgumentException("Invalid cover image file: " + coverImageFile.getAbsolutePath());
-        }
-    }
-
-    private static String removeFileExtension(String fileName) {
-        final int index = fileName.lastIndexOf('.');
-
-        if (index >= 0) {
-            return fileName.substring(0, index);
-        } else {
-            return fileName;
         }
     }
 }

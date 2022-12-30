@@ -5,11 +5,8 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
-import javax.management.RuntimeErrorException;
-import javax.sql.rowset.spi.XmlReader;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
@@ -33,10 +30,10 @@ public class SSMLSplitter {
         this.maxChunkWeight = maxChunkWeight;
     }
 
-    List<String> splitSSML(String ssml) {
+    public List<String> splitSSML(String ssml) {
         try {
             final XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(new StringReader(ssml));
-            final Stack<XMLEvent> wrapperEventStack = new Stack<>();
+            final List<XMLEvent> wrapperEventStack = new ArrayList<>();
             final List<String> chunks = new ArrayList<>();
 
             // Start writing the SSML contents to a chunk.
@@ -46,12 +43,12 @@ public class SSMLSplitter {
 
             while(reader.hasNext()) {
                 // Write any wrappers we've already encountered.
-                writeEvents(writer, new ArrayList<>(wrapperEventStack));
+                writeEvents(writer, wrapperEventStack);
 
                 XMLEvent nextTag = reader.nextTag();
             
                 if (nextTag.isStartDocument()) {
-                    wrapperEventStack.push(nextTag);
+                    wrapperEventStack.add(nextTag);
                     writer.add(nextTag);
                     continue;
                 } else if (nextTag.isStartElement() && isWrapperElement(nextTag.asStartElement())) {
@@ -68,7 +65,7 @@ public class SSMLSplitter {
                     break;
                 }
 
-                final List<XMLEvent> elementEvents = readContentElement(reader, nextTag.asStartElement());
+                final List<XMLEvent> elementEvents = readElement(reader, nextTag.asStartElement());
                 final int elementWeight = getWeight(elementEvents);
 
                 if (currentWeight + elementWeight > this.maxChunkWeight) {
@@ -81,7 +78,7 @@ public class SSMLSplitter {
                     chunkWriter = new StringWriter();
                     writer = XMLOutputFactory.newInstance().createXMLEventWriter(chunkWriter);
 
-                    // Reply the current set of wrapper elements in the new chunk.
+                    // Replay the current set of wrapper elements in the new chunk.
                     //
                     // Note: Passing a stack to the ArrayList constructor results in a list
                     // with the elements in first-in-first-out order.
@@ -101,33 +98,32 @@ public class SSMLSplitter {
         }
     }
 
-    private List<XMLEvent> pushWrapperElement(final XMLEventReader reader, Stack<XMLEvent> wrapperEventStack, StartElement startElement) throws XMLStreamException {
+    private List<XMLEvent> pushWrapperElement(final XMLEventReader reader, List<XMLEvent> wrapperEventStack, StartElement startElement) throws XMLStreamException {
         final List<XMLEvent> events = new ArrayList<>();
 
         events.add(startElement);
-        wrapperEventStack.push(startElement);
+        wrapperEventStack.add(startElement);
 
         while (reader.peek().isAttribute()) {
             final XMLEvent next = reader.nextEvent();
 
-            events.add(next)
-            wrapperEventStack.push(next);
+            events.add(next);
+            wrapperEventStack.add(next);
         }
 
         return events;
     }
 
-    private void popWrapperElement(Stack<XMLEvent> wrapperEventStack) {
-        while (!wrapperEventStack.peek().isStartElement()) {
-            wrapperEventStack.pop();
+    private void popWrapperElement(List<XMLEvent> wrapperEventStack) {
+        while (!wrapperEventStack.get(wrapperEventStack.size()-1).isStartElement()) {
+            wrapperEventStack.remove(wrapperEventStack.size()-1);
         }
 
-        wrapperEventStack.pop();
+        wrapperEventStack.remove(wrapperEventStack.size()-1);
     }
 
-    private List<XMLEvent> readContentElement(final XMLEventReader reader, StartElement startElement) throws XMLStreamException {
+    private List<XMLEvent> readElement(final XMLEventReader reader, StartElement startElement) throws XMLStreamException {
         final List<XMLEvent> result = new ArrayList<>();
-
         result.add(startElement);
 
         while (!reader.peek().isEndElement()) {
@@ -135,6 +131,7 @@ public class SSMLSplitter {
         }
 
         result.add(reader.nextEvent().asEndElement());
+        return result;
     }
 
     private boolean isWrapperElement(final StartElement startElement) {

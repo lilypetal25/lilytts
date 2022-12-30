@@ -100,7 +100,7 @@ public class NewsToSpeechCommand implements Callable<Integer> {
                     .filter(x -> x instanceof ChapterTitleContent)
                     .map(x -> ((ChapterTitleContent) x).getContent())
                     .findFirst()
-                    .orElseGet(() -> removeFileExtension(context.getSourceFile().getName()));
+                    .orElseGet(() -> StringUtil.removeFileExtension(context.getSourceFile().getName()));
 
                 final String publisher = context.getContent().stream()
                     .filter(x -> x instanceof ArticlePublisherContent)
@@ -229,17 +229,6 @@ public class NewsToSpeechCommand implements Callable<Integer> {
     // TODO: Share this method with TextToSpeechAzureCommand.
     private static boolean isNullOrEmpty(String value) {
         return value == null || value.isEmpty();
-    }
-
-    // TODO: Share this method with TextToSpeechAzureCommand.
-    private static String removeFileExtension(String fileName) {
-        final int index = fileName.lastIndexOf('.');
-
-        if (index >= 0) {
-            return fileName.substring(0, index);
-        } else {
-            return fileName;
-        }
     }
 
     // TODO: Share the logic for enumerating text files with the find-articles command.

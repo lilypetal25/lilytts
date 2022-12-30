@@ -12,4 +12,14 @@ public class StringUtil {
         int index = value.indexOf(substring);
         return index >= 0 ? value.substring(0, index) : value;
     }
+
+    public static String removeFileExtension(String fileName) {
+        final int index = fileName.lastIndexOf('.');
+
+        if (index >= 0) {
+            return fileName.substring(0, index);
+        } else {
+            return fileName;
+        }
+    }
 }
