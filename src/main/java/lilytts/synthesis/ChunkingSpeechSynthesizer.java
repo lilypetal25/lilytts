@@ -11,11 +11,12 @@ import lilytts.ssml.SSMLSplitter;
 public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
     private final SpeechSynthesizer inner;
     private final SSMLSplitter splitter;
-    private final AudioFileMerger merger = new AudioFileMerger();
+    private final AudioFileMerger merger;
 
-    public ChunkingSpeechSynthesizer(final SpeechSynthesizer inner, final SSMLSplitter splitter) {
+    public ChunkingSpeechSynthesizer(final SpeechSynthesizer inner, final SSMLSplitter splitter, final AudioFileMerger merger) {
         this.inner = inner;
         this.splitter = splitter;
+        this.merger = merger;
     }
 
     @Override
