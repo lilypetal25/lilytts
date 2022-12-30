@@ -23,6 +23,7 @@ import lilytts.content.ChapterTitleContent;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
 import lilytts.processing.MultiFileContentSplitter;
+import lilytts.processing.SingleFileContentSplitter;
 import lilytts.processing.ContentSplitter;
 import lilytts.processing.MetadataContext;
 import lilytts.processing.MetadataGenerator;
@@ -40,7 +41,7 @@ import picocli.CommandLine.Parameters;
 
 @Command(name = "book-to-speech")
 public class BookToSpeechCommand implements Callable<Integer> {
-    private static final int DEFAULT_MAX_PART_CHARACTERS = 7500;
+    private static final int DEFAULT_MAX_PART_CHARACTERS = 0;
     private static final int DEFAULT_PROSODY_RATE = 0;
     private static final int DEFAULT_PITCH = 0;
     private static final AzureVoice DEFAULT_VOICE = AzureVoice.Jenny;
@@ -181,9 +182,13 @@ public class BookToSpeechCommand implements Callable<Integer> {
     }
 
     private ContentSplitter configureSplitter() {
-        return MultiFileContentSplitter.builder()
-            .withMaxPartCharacters(maxPartCharacters)
-            .build();
+        if (this.maxPartCharacters > 0) {
+            return MultiFileContentSplitter.builder()
+                .withMaxPartCharacters(maxPartCharacters)
+                .build();
+        } else {
+            return SingleFileContentSplitter.create();
+        }
     }
 
     private void validateCommandLineParameters() {

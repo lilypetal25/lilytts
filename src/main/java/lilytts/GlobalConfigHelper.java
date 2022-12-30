@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
+import lilytts.ssml.SSMLSplitter;
 import lilytts.synthesis.AzureSynthesizer;
+import lilytts.synthesis.ChunkingSpeechSynthesizer;
 import lilytts.synthesis.CompoundSynthesizer;
 import lilytts.synthesis.SpeechSynthesizer;
 import lilytts.yaml.TextToSpeechConfig;
@@ -45,7 +47,7 @@ public class GlobalConfigHelper {
             .map(x -> AzureSynthesizer.fromSubscription(x.getDisplayName(), x.getSubscriptionKey(), x.getServiceRegion()))
             .toList();
         
-        return CompoundSynthesizer.tryInPriorityOrder(synthesizers);
+        return new ChunkingSpeechSynthesizer(CompoundSynthesizer.tryInPriorityOrder(synthesizers), new SSMLSplitter());
     }
 
     private static IllegalArgumentException missingYamlParam(File yamlFile, String propertyName) {
