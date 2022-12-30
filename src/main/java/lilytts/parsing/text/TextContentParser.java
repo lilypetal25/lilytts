@@ -17,7 +17,7 @@ import lilytts.content.SectionBreakContent;
 import lilytts.parsing.ContentParser;
 
 public class TextContentParser implements ContentParser {
-    private static final Pattern SECTION_BREAK_PATTERN = Pattern.compile("-{3,}((?<title>[^-]+)-{3,})?", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SECTION_BREAK_PATTERN = Pattern.compile("-{3,}((?<title>.+[^-])-{3,})?", Pattern.CASE_INSENSITIVE);
     private static final Pattern ARTICLE_PUBLISHER_PATTERN = Pattern.compile("Published .+ by (?<publisher>\\w[\\w\\s]+\\w)\\.", Pattern.CASE_INSENSITIVE);
 
     public static class Builder {
