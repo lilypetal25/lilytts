@@ -95,9 +95,7 @@ public class TextFileProcessor {
                     throw new RuntimeException("Unable to create directory: " + targetFolder.getPath());
                 }
 
-                final File tempOutputFile = File.createTempFile(fileNameWithoutExtension, ".mp3");
-                tempOutputFile.deleteOnExit();
-
+                final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(outputFileName) + " audio.mp3");
                 speechSynthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), tempOutputFile.getAbsolutePath());
 
                 final MetadataContext metadataContext = new MetadataContext();
@@ -119,6 +117,7 @@ public class TextFileProcessor {
                     throw new RuntimeException("Unexpected error while attempting to write ID3v2 tags to MP3 file: " + exception.getMessage(), exception);
                 }
 
+                tempOutputFile.delete();
                 System.out.printf("  => Saved audio to file: %s%n", outputFile.getName());
             }
         }
