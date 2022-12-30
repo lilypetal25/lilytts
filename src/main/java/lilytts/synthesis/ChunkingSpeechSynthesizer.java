@@ -50,11 +50,18 @@ public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
             }
 
             inner.synthesizeSsmlToFile(chunkSSML, chunkFilePath);
-            System.out.println("     Wrote audio chunk to file " + chunkFile.getName());
+            System.out.println("     Wrote chunk to file " + chunkFile.getName());
         }
 
         // Merge all the synthesized chunks into one final audio file.
-        merger.mergeAudioFiles(completedChunkFiles, new File(outputFilePath));
+        final File mergedAudioFile = new File(outputFilePath);
+        System.out.println("     Merging chunks into one file: " + mergedAudioFile.getName());
+        merger.mergeAudioFiles(completedChunkFiles, mergedAudioFile);
+
+        // Delete the temporary audio chunks.
+        for (final File chunkFile : completedChunkFiles) {
+            chunkFile.delete();
+        }
     }
     
 }
