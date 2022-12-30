@@ -4,7 +4,7 @@ import lilytts.synthesis.AzureVoice;
 
 public class AzureSynthesisConfig {
     private AzureVoice voice = AzureVoice.Jenny;
-    private int maxPartCharacters = 7500;
+    private int maxPartCharacters = 0;
     private int prosodyRate = 0;
     private int pitch = 0;
 
