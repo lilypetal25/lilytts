@@ -12,6 +12,7 @@ import lilytts.content.ContentItem;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
 import lilytts.processing.ContentSplitter;
+import lilytts.processing.MultiFileContentSplitter;
 import lilytts.ssml.SSMLWriter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -61,7 +62,7 @@ public class TextToSsmlCommand implements Callable<Integer> {
     }
 
     private ContentSplitter configureSplitter() {
-        return ContentSplitter.builder()
+        return MultiFileContentSplitter.builder()
             .withMaxPartCharacters(maxPartCharacters)
             .build();
     }

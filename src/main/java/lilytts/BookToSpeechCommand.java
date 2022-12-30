@@ -22,6 +22,7 @@ import com.mpatric.mp3agic.ID3v24Tag;
 import lilytts.content.ChapterTitleContent;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
+import lilytts.processing.MultiFileContentSplitter;
 import lilytts.processing.ContentSplitter;
 import lilytts.processing.MetadataContext;
 import lilytts.processing.MetadataGenerator;
@@ -180,7 +181,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
     }
 
     private ContentSplitter configureSplitter() {
-        return ContentSplitter.builder()
+        return MultiFileContentSplitter.builder()
             .withMaxPartCharacters(maxPartCharacters)
             .build();
     }

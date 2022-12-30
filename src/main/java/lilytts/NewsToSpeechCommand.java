@@ -20,6 +20,7 @@ import lilytts.content.ArticlePublisherContent;
 import lilytts.content.ChapterTitleContent;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
+import lilytts.processing.MultiFileContentSplitter;
 import lilytts.processing.ContentSplitter;
 import lilytts.processing.MetadataContext;
 import lilytts.processing.MetadataGenerator;
@@ -77,7 +78,7 @@ public class NewsToSpeechCommand implements Callable<Integer> {
 
         final ContentParser contentParser = TextContentParser.builder().setRecognizeArticlePublisher(true).build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
-        final ContentSplitter splitter = ContentSplitter.builder().withMaxPartCharacters(8000).build();
+        final ContentSplitter splitter = MultiFileContentSplitter.builder().withMaxPartCharacters(8000).build();
         final SpeechSynthesizer synthesizer = configHelper.setupSpeechSynthesizerFromGlobalConfig();
         final AzureCostEstimator azureCostEstimator = new AzureCostEstimator();
 

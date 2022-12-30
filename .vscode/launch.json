@@ -10,7 +10,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "book-to-speech '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash' '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash' --only '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash/Front Matter.txt'",
+            "args": "book-to-speech '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash' '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash' --only '/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash/Chapter 7.txt'",
             "cwd": "/Users/lily/Library/CloudStorage/OneDrive-Personal/Books/Cultural Backlash"
         },
         {
