@@ -60,11 +60,18 @@ public class TextFileProcessor {
             final List<ContentItem> content = this.contentParser.readContent(inputStream);
             final List<List<ContentItem>> parts = splitter.splitContent(content);
 
-            System.out.printf("Converting file %d of %d to speech as %s part(s): %s%n",
-                textFiles.indexOf(textFile) + 1,
-                textFiles.size(),
-                parts.size(),
-                textFile.getName());
+            if (parts.size() > 1) {
+                System.out.printf("Converting file %d of %d to speech as %s part(s): %s%n",
+                    textFiles.indexOf(textFile) + 1,
+                    textFiles.size(),
+                    parts.size(),
+                    textFile.getName());
+            } else {
+                System.out.printf("Converting file %d of %d to speech: %s%n",
+                    textFiles.indexOf(textFile) + 1,
+                    textFiles.size(),
+                    textFile.getName());
+            }
 
             for (int i = 0; i < parts.size(); i++) {
                 partsProcessed++;
