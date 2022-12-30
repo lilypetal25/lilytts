@@ -8,19 +8,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
 public class SSMLSplitter {
-    private static final String[] WRAPPER_ELEMENT_NAMES = new String[] { "speak", "voice" };
+    private static final String[] WRAPPER_ELEMENT_NAMES = new String[] { "speak", "voice", "prosody" };
     private static final int DEFAULT_MAX_CHUNK_WEIGHT = 7000;
 
     private final int maxChunkWeight;
+    private final XMLEventFactory xmlEventFactory = XMLEventFactory.newInstance();
 
     public SSMLSplitter() {
         this(DEFAULT_MAX_CHUNK_WEIGHT);
@@ -42,9 +45,6 @@ public class SSMLSplitter {
             XMLEventWriter writer = XMLOutputFactory.newInstance().createXMLEventWriter(chunkWriter);
 
             while(reader.hasNext()) {
-                // Write any wrappers we've already encountered.
-                writeEvents(writer, wrapperEventStack);
-
                 XMLEvent nextTag = reader.nextTag();
             
                 if (nextTag.isStartDocument()) {
@@ -53,13 +53,15 @@ public class SSMLSplitter {
                     continue;
                 } else if (nextTag.isStartElement() && isWrapperElement(nextTag.asStartElement())) {
                     // Write the wrapper element onto the stack and to the output stream.
-                    pushWrapperElement(reader, wrapperEventStack, nextTag.asStartElement());
+                    List<XMLEvent> events = pushWrapperElement(reader, wrapperEventStack, nextTag.asStartElement());
+                    writeEvents(writer, events);
                     continue;
                 } else if (nextTag.isEndElement()) {
                     // Write the end tag to the current SSML document and then pop all the events
                     // for the current wrapper off the end of the stack.
                     writer.add(nextTag);
                     popWrapperElement(wrapperEventStack);
+                    break;
                 } else if (nextTag.isEndDocument()) {
                     // Stop and return the parts we have so far.
                     break;
@@ -70,7 +72,7 @@ public class SSMLSplitter {
 
                 if (currentWeight + elementWeight > this.maxChunkWeight) {
                     // Close the current chunk, writing any necessary end tags.
-                    closeXmlDocument(writer);
+                    closeXmlDocument(writer, wrapperEventStack);
                     chunks.add(chunkWriter.toString());
 
                     // Start a new chunk.
@@ -82,14 +84,14 @@ public class SSMLSplitter {
                     //
                     // Note: Passing a stack to the ArrayList constructor results in a list
                     // with the elements in first-in-first-out order.
-                    writeEvents(writer, new ArrayList<>(wrapperEventStack));
+                    writeEvents(writer, wrapperEventStack);
                 }
 
                 writeEvents(writer, elementEvents);
                 currentWeight += elementWeight;
             }
 
-            closeXmlDocument(writer);
+            closeXmlDocument(writer, wrapperEventStack);
             chunks.add(chunkWriter.toString());
 
             return chunks;
@@ -151,9 +153,20 @@ public class SSMLSplitter {
         }
     }
 
-    private void closeXmlDocument(XMLEventWriter writer) throws XMLStreamException
+    private void closeXmlDocument(XMLEventWriter writer, List<XMLEvent> wrapperEventStack) throws XMLStreamException
     {
-        // TODO: Not sure if we need to write the end element events here.
+        // Write end element events for each start element that is still open.
+        for (int i = wrapperEventStack.size() - 1; i >= 0; i--) {
+            if (!wrapperEventStack.get(i).isStartElement()) {
+                continue;
+            }
+
+            final StartElement startElement = wrapperEventStack.get(i).asStartElement();
+            final EndElement endElement = xmlEventFactory.createEndElement(startElement.getName(), startElement.getNamespaces());
+
+            writer.add(endElement);
+        }
+
         writer.flush();
         writer.close();
     }
