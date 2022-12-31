@@ -8,9 +8,7 @@ import lilytts.content.ContentItem;
 public class MetadataContext {
     private File sourceFile;
     private List<ContentItem> content;
-    private int partsInFile;
-    private int partIndex;
-    private int totalProcessedParts;
+    private int fileIndex;
 
     public File getSourceFile() {
         return sourceFile;
@@ -28,27 +26,11 @@ public class MetadataContext {
         this.content = content;
     }
 
-    public int getPartsInFile() {
-        return partsInFile;
+    public int getFileIndex() {
+        return fileIndex;
     }
 
-    public void setPartsInFile(int partsInFile) {
-        this.partsInFile = partsInFile;
-    }
-
-    public int getPartIndex() {
-        return partIndex;
-    }
-
-    public void setPartIndex(int partIndex) {
-        this.partIndex = partIndex;
-    }
-
-    public int getTotalProcessedParts() {
-        return totalProcessedParts;
-    }
-
-    public void setTotalProcessedParts(int totalProcessedParts) {
-        this.totalProcessedParts = totalProcessedParts;
+    public void setFileIndex(int partIndex) {
+        this.fileIndex = partIndex;
     }
 }

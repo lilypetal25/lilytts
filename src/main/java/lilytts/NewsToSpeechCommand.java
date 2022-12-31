@@ -20,8 +20,6 @@ import lilytts.content.ArticlePublisherContent;
 import lilytts.content.ChapterTitleContent;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
-import lilytts.processing.SingleFileContentSplitter;
-import lilytts.processing.ContentSplitter;
 import lilytts.processing.MetadataContext;
 import lilytts.processing.MetadataGenerator;
 import lilytts.processing.TextFileProcessor;
@@ -78,7 +76,6 @@ public class NewsToSpeechCommand implements Callable<Integer> {
 
         final ContentParser contentParser = TextContentParser.builder().setRecognizeArticlePublisher(true).build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
-        final ContentSplitter splitter = SingleFileContentSplitter.create();
         final SpeechSynthesizer synthesizer = configHelper.setupSpeechSynthesizerFromGlobalConfig();
         final AzureCostEstimator azureCostEstimator = new AzureCostEstimator();
 
@@ -114,13 +111,13 @@ public class NewsToSpeechCommand implements Callable<Integer> {
                 metadata.setAlbumArtist(NewsToSpeechCommand.this.albumArtist != null ? NewsToSpeechCommand.this.albumArtist : "News Deep Dive");
                 metadata.setAlbum(albumName);
                 metadata.setTitle(articleName);
-                metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
+                metadata.setTrack(Integer.toString(context.getFileIndex() + 1));
 
                 return metadata;
             }
         };
 
-        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
+        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, ssmlWriter, metadataGenerator, azureCostEstimator);
         fileProcessor.setVerbose(this.pretend);
         fileProcessor.convertTextFiles(articleFiles, albumTargetFolder, (file) -> !this.pretend);
 

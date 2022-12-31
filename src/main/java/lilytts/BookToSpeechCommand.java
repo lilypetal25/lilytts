@@ -22,9 +22,6 @@ import com.mpatric.mp3agic.ID3v24Tag;
 import lilytts.content.ChapterTitleContent;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
-import lilytts.processing.MultiFileContentSplitter;
-import lilytts.processing.SingleFileContentSplitter;
-import lilytts.processing.ContentSplitter;
 import lilytts.processing.MetadataContext;
 import lilytts.processing.MetadataGenerator;
 import lilytts.processing.TextFileProcessor;
@@ -41,7 +38,6 @@ import picocli.CommandLine.Parameters;
 
 @Command(name = "book-to-speech")
 public class BookToSpeechCommand implements Callable<Integer> {
-    private static final int DEFAULT_MAX_PART_CHARACTERS = 0;
     private static final int DEFAULT_PROSODY_RATE = 0;
     private static final int DEFAULT_PITCH = 0;
     private static final AzureVoice DEFAULT_VOICE = AzureVoice.Jenny;
@@ -59,7 +55,6 @@ public class BookToSpeechCommand implements Callable<Integer> {
     private boolean pretend = false;
 
     private AzureVoice voice;
-    private int maxPartCharacters;
     private int prosodyRate;
     private int pitch;
     private String authorName;
@@ -77,7 +72,6 @@ public class BookToSpeechCommand implements Callable<Integer> {
 
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
-        final ContentSplitter splitter = configureSplitter();
         final SpeechSynthesizer synthesizer = configHelper.setupSpeechSynthesizerFromGlobalConfig();
         final CostEstimator azureCostEstimator = new AzureCostEstimator();
 
@@ -92,15 +86,11 @@ public class BookToSpeechCommand implements Callable<Integer> {
                     .findFirst()
                     .orElseGet(() -> StringUtil.removeFileExtension(context.getSourceFile().getName()));
 
-                final String trackTitle = context.getPartsInFile() == 1 ?
-                    chapterTitle :
-                    String.format("%s (Part %d of %d)", chapterTitle, context.getPartIndex() + 1, context.getPartsInFile());
-
                 final ID3v24Tag metadata = new ID3v24Tag();
                 metadata.setArtist(authorName);
                 metadata.setAlbum(bookTitle);
-                metadata.setTitle(trackTitle);
-                metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
+                metadata.setTitle(chapterTitle);
+                metadata.setTrack(Integer.toString(context.getFileIndex() + 1));
                 metadata.setAlbumImage(coverImageBytes, coverImageMimeType);
                 metadata.setYear(bookYear);
 
@@ -125,7 +115,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
             fileFilter = (file) -> true;
         }
 
-        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
+        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, ssmlWriter, metadataGenerator, azureCostEstimator);
         fileProcessor.setVerbose(this.pretend);
         fileProcessor.convertTextFiles(chapterFiles, outputDirectory, fileFilter);
 
@@ -182,16 +172,6 @@ public class BookToSpeechCommand implements Callable<Integer> {
         return String.format(Locale.ENGLISH, "%d%%", value);
     }
 
-    private ContentSplitter configureSplitter() {
-        if (this.maxPartCharacters > 0) {
-            return MultiFileContentSplitter.builder()
-                .withMaxPartCharacters(maxPartCharacters)
-                .build();
-        } else {
-            return SingleFileContentSplitter.create();
-        }
-    }
-
     private void validateCommandLineParameters() {
         if (!(inputDirectory.exists() && inputDirectory.isDirectory())) {
             throw new IllegalArgumentException("Invalid input directory: " + inputDirectory.getAbsolutePath());
@@ -215,7 +195,6 @@ public class BookToSpeechCommand implements Callable<Integer> {
         // Parse settings about how to generate the audio for the book.
         final Optional<AzureSynthesisConfig> synthesisConfig = Optional.of(config.getAudio());
         this.voice = synthesisConfig.map(x -> x.getVoice()).orElse(DEFAULT_VOICE);
-        this.maxPartCharacters = synthesisConfig.map(x -> x.getMaxPartCharacters()).orElse(DEFAULT_MAX_PART_CHARACTERS);
         this.prosodyRate = synthesisConfig.map(x -> x.getProsodyRate()).orElse(DEFAULT_PROSODY_RATE);
         this.pitch = synthesisConfig.map(x -> x.getPitch()).orElse(DEFAULT_PITCH);
 

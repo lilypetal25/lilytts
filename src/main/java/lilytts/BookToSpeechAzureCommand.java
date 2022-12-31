@@ -16,8 +16,6 @@ import com.mpatric.mp3agic.ID3v24Tag;
 import lilytts.content.ChapterTitleContent;
 import lilytts.parsing.ContentParser;
 import lilytts.parsing.text.TextContentParser;
-import lilytts.processing.MultiFileContentSplitter;
-import lilytts.processing.ContentSplitter;
 import lilytts.processing.MetadataContext;
 import lilytts.processing.MetadataGenerator;
 import lilytts.processing.TextFileProcessor;
@@ -47,9 +45,6 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
 
     @Option(names = { "--voice" })
     private AzureVoice voice = AzureVoice.Jenny;
-
-    @Option(names = { "--maxPartCharacters" })
-    private int maxPartCharacters = 7500;
 
     @Option(names = { "--prosody" })
     private int prosodyRate = 0;
@@ -84,7 +79,6 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
 
         final ContentParser contentParser = TextContentParser.builder().build();
         final SSMLWriter ssmlWriter = configureSsmlWriter();
-        final ContentSplitter splitter = configureSplitter();
         final SpeechSynthesizer synthesizer = AzureSynthesizer.fromSubscription("Azure speech service", subscriptionKey, serviceRegion);
         final CostEstimator azureCostEstimator = new AzureCostEstimator();
 
@@ -99,15 +93,11 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
                     .findFirst()
                     .orElseGet(() -> StringUtil.removeFileExtension(context.getSourceFile().getName()));
 
-                final String trackTitle = context.getPartsInFile() == 1 ?
-                    chapterTitle :
-                    String.format("%s (Part %d of %d)", chapterTitle, context.getPartIndex() + 1, context.getPartsInFile());
-
                 final ID3v24Tag metadata = new ID3v24Tag();
                 metadata.setArtist(authorName);
                 metadata.setAlbum(bookTitle);
-                metadata.setTitle(trackTitle);
-                metadata.setTrack(Integer.toString(context.getTotalProcessedParts() + 1));
+                metadata.setTitle(chapterTitle);
+                metadata.setTrack(Integer.toString(context.getFileIndex() + 1));
                 metadata.setAlbumImage(coverImageBytes, coverImageMimeType);
                 metadata.setYear(bookYear);
 
@@ -132,7 +122,7 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
             fileFilter = (file) -> true;
         }
 
-        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
+        final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, ssmlWriter, metadataGenerator, azureCostEstimator);
         fileProcessor.convertTextFiles(chapterFiles, outputDirectory, fileFilter);
 
         System.out.println("Done!");
@@ -186,12 +176,6 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
 
     private static String formatPercent(int value) {
         return String.format(Locale.ENGLISH, "%d%%", value);
-    }
-
-    private ContentSplitter configureSplitter() {
-        return MultiFileContentSplitter.builder()
-            .withMaxPartCharacters(maxPartCharacters)
-            .build();
     }
 
     private void validateCommandLineParameters() {

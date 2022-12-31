@@ -9,8 +9,10 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -33,19 +35,59 @@ import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
 
 public class TextFileProcessor {
+    private static class ParsedTextFile {
+        private File inputFile;
+        private List<ContentItem> content;
+        private String ssml;
+        private double estimatedCost;
+        private File outputFile;
+        private boolean skipped;
+
+        ParsedTextFile(File inputFile, List<ContentItem> content, String ssml, double estimatedCost, File outputFile, boolean skipped) {
+            this.inputFile = inputFile;
+            this.content = content;
+            this.ssml = ssml;
+            this.estimatedCost = estimatedCost;
+            this.outputFile = outputFile;
+            this.skipped = skipped;
+        }
+
+        public File getInputFile() {
+            return inputFile;
+        }
+
+        public List<ContentItem> getContent() {
+            return content;
+        }
+
+        public String getSsml() {
+            return ssml;
+        }
+
+        public double getEstimatedCost() {
+            return estimatedCost;
+        }
+
+        public File getOutputFile() {
+            return outputFile;
+        }
+
+        public boolean isSkipped() {
+            return skipped;
+        }
+    }
+
     private final SpeechSynthesizer speechSynthesizer;
     private final ContentParser contentParser;
-    private final ContentSplitter splitter;
     private final SSMLWriter ssmlWriter;
     private final XMLOutputFactory xmlOutputFactory;
     private final MetadataGenerator metadataGenerator;
     private final CostEstimator costEstimator;
     private boolean verbose = true;
 
-    public TextFileProcessor(SpeechSynthesizer speechSynthesizer, ContentParser contentParser, ContentSplitter splitter, SSMLWriter ssmlWriter, MetadataGenerator metadataGenerator, CostEstimator costEstimator) {
+    public TextFileProcessor(SpeechSynthesizer speechSynthesizer, ContentParser contentParser, SSMLWriter ssmlWriter, MetadataGenerator metadataGenerator, CostEstimator costEstimator) {
         this.speechSynthesizer = speechSynthesizer;
         this.contentParser = contentParser;
-        this.splitter = splitter;
         this.ssmlWriter = ssmlWriter;
         this.metadataGenerator = metadataGenerator;
         this.xmlOutputFactory = XMLOutputFactory.newFactory();
@@ -64,97 +106,103 @@ public class TextFileProcessor {
         // TODO: Encapsulate handling of the print stream.
         final PrintStream verboseOut = this.verbose ? System.out : new PrintStream(OutputStream.nullOutputStream());
 
-        int partsProcessed = -1;
-        double totalEstimatedCost = 0.0;
+        final List<ParsedTextFile> parsedTextFiles = new ArrayList<>(textFiles.size());
 
-        for (File textFile : ProgressBar.wrap(textFiles, makeSummaryProgressBar())) {
-            final FileReader inputStream = new FileReader(textFile);
-            final List<ContentItem> content = this.contentParser.readContent(inputStream);
-            final List<List<ContentItem>> parts = splitter.splitContent(content);
+        for (File file : textFiles) {
+            parsedTextFiles.add(parseTextFile(file, targetFolder, fileFilter));
+        }
 
-            if (parts.size() > 1) {
-                verboseOut.printf("Converting file %d of %d to speech as %s part(s): %s%n",
-                    textFiles.indexOf(textFile) + 1,
-                    textFiles.size(),
-                    parts.size(),
-                    textFile.getName());
-            } else {
-                verboseOut.printf("Converting file %d of %d to speech: %s%n",
-                    textFiles.indexOf(textFile) + 1,
-                    textFiles.size(),
-                    textFile.getName());
+        double totalEstimatedCost = parsedTextFiles.stream().collect(Collectors.summingDouble(x -> x.getEstimatedCost()));
+
+        final DecimalFormat costFormatter = new DecimalFormat("$######0.00");
+        System.out.printf("Estimated cost: %s%n", costFormatter.format(totalEstimatedCost));
+
+        long currentProgress = 0;
+        long maxProgress = parsedTextFiles.stream()
+            .filter(x -> !x.skipped)
+            .collect(Collectors.summingLong(x -> x.getSsml().length()));
+        
+        if (parsedTextFiles.stream().anyMatch(x -> !x.isSkipped())) {
+            // Ensure target folder exists if there are any files to convert.
+            if (!targetFolder.exists() && !targetFolder.mkdirs()) {
+                throw new RuntimeException("Unable to create directory: " + targetFolder.getPath());
             }
+        }
 
-            for (int i = 0; i < parts.size(); i++) {
-                partsProcessed++;
+        try (ProgressBar summaryProgressBar = makeProgressBar("Converting text to speech", maxProgress)) {
+            for (ParsedTextFile textFile : parsedTextFiles) {
+                final int fileIndex = parsedTextFiles.indexOf(textFile);
 
-                final String fileNameWithoutExtension = StringUtil.removeFileExtension(textFile.getName());
-                final String outputFileName = parts.size() > 1
-                        ? fileNameWithoutExtension + " (Part " + (i + 1) + ").mp3"
-                        : fileNameWithoutExtension + ".mp3";
-                final File outputFile = new File(targetFolder, outputFileName);
+                verboseOut.printf("Converting file %d of %d to speech: %s%n",
+                    fileIndex + 1,
+                    parsedTextFiles.size(),
+                    textFile.getInputFile().getName());
 
-                final StringWriter ssmlStringWriter = new StringWriter();
-                ssmlWriter.writeSSML(parts.get(i), xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
-
-                totalEstimatedCost += costEstimator.getEstimatedCost(ssmlStringWriter.toString());
-
-                if (outputFile.exists() && outputFile.length() > 0) {
-                    verboseOut.printf("  => Skipping file because it already exists: %s%n", outputFile.getName());
+                if (textFile.getOutputFile().exists() && textFile.getOutputFile().length() > 0) {
+                    verboseOut.printf("  => Skipping file because it already exists: %s%n", textFile.getOutputFile().getName());
+                    currentProgress += textFile.getSsml().length();
                     continue;
                 }
 
-                if (!fileFilter.test(textFile)) {
-                    verboseOut.printf("  => Skipping file.%n", outputFile.getName());
+                if (textFile.isSkipped()) {
+                    verboseOut.printf("  => Skipping file.%n", textFile.getOutputFile().getName());
                     continue;
                 }
 
-                // Ensure target folder exists now that we've found at least one file to convert.
-                if (!targetFolder.exists() && !targetFolder.mkdirs()) {
-                    throw new RuntimeException("Unable to create directory: " + targetFolder.getPath());
-                }
+                summaryProgressBar.stepTo(currentProgress);
 
-                final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(outputFileName) + " audio.mp3");
-                final String ssml = ssmlStringWriter.toString();
+                final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(textFile.getOutputFile().getName()) + " audio.mp3");
 
-                try (ProgressBar progressBar = makeSynthesisProgressBar(outputFile, ssml.length())) {
-                    speechSynthesizer.synthesizeSsmlToFile(ssml, tempOutputFile.getAbsolutePath(), progress -> {
+                try (ProgressBar progressBar = makeProgressBar(textFile.getOutputFile().getName(), textFile.getSsml().length())) {
+                    speechSynthesizer.synthesizeSsmlToFile(textFile.getSsml(), tempOutputFile.getAbsolutePath(), progress -> {
                         progressBar.stepTo(progress.getCurrentProgress());
                         progressBar.maxHint(progress.getMaxProgress());
                     });
                 }
 
                 final MetadataContext metadataContext = new MetadataContext();
-                metadataContext.setSourceFile(textFile);
-                metadataContext.setContent(content);
-                metadataContext.setPartsInFile(parts.size());
-                metadataContext.setPartIndex(i);
-                metadataContext.setTotalProcessedParts(partsProcessed);
+                metadataContext.setSourceFile(textFile.getInputFile());
+                metadataContext.setContent(textFile.getContent());
+                metadataContext.setFileIndex(fileIndex);
 
                 final ID3v24Tag metadata = metadataGenerator.generateMetadata(metadataContext);
 
-                Files.copy(tempOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(tempOutputFile.toPath(), textFile.getOutputFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
 
                 try {
                     final Mp3File mp3File = new Mp3File(tempOutputFile.getAbsolutePath());
                     mp3File.setId3v2Tag(metadata);
-                    mp3File.save(outputFile.getAbsolutePath());
+                    mp3File.save(textFile.getOutputFile().getAbsolutePath());
                 } catch (UnsupportedTagException | InvalidDataException | NotSupportedException exception) {
                     throw new RuntimeException("Unexpected error while attempting to write ID3v2 tags to MP3 file: " + exception.getMessage(), exception);
                 }
 
                 tempOutputFile.delete();
-                verboseOut.printf("  => Saved audio to file: %s%n", outputFile.getName());
+                verboseOut.printf("  => Saved audio to file: %s%n", textFile.getOutputFile().getName());
             }
         }
-
-        final DecimalFormat costFormatter = new DecimalFormat("$######0.00");
-        System.out.printf("Estimated cost: %s%n", costFormatter.format(totalEstimatedCost));
     }
 
-    private static ProgressBar makeSynthesisProgressBar(File outputFile, long initialMax) {
+    private ParsedTextFile parseTextFile(File inputFile, final File targetFolder, final Predicate<File> fileFilter) throws IOException, SSMLWritingException, XMLStreamException {
+        final FileReader inputStream = new FileReader(inputFile);
+        final List<ContentItem> content = this.contentParser.readContent(inputStream);
+
+        final String fileNameWithoutExtension = StringUtil.removeFileExtension(inputFile.getName());
+        final File outputFile = new File(targetFolder, fileNameWithoutExtension + ".mp3");
+
+        final StringWriter ssmlStringWriter = new StringWriter();
+        ssmlWriter.writeSSML(content, xmlOutputFactory.createXMLStreamWriter(ssmlStringWriter));
+        final String ssml = ssmlStringWriter.toString();
+
+        final double estimatedCost = costEstimator.getEstimatedCost(ssml);
+        final boolean skipped = fileFilter.test(inputFile);
+
+        return new ParsedTextFile(inputFile, content, ssml, estimatedCost, outputFile, skipped);
+    }
+
+    private static ProgressBar makeProgressBar(String taskName, long initialMax) {
         final ProgressBar progressBar = new ProgressBarBuilder()
-                    .setTaskName(outputFile.getName())
+                    .setTaskName(taskName)
                     .clearDisplayOnFinish()
                     .continuousUpdate()
                     .hideETA()
@@ -163,13 +211,5 @@ public class TextFileProcessor {
 
         progressBar.stepTo(0);
         return progressBar;
-    }
-
-    private static ProgressBarBuilder makeSummaryProgressBar() {
-        return new ProgressBarBuilder()
-                    .setTaskName("Processing text files")
-                    .clearDisplayOnFinish()
-                    .continuousUpdate()
-                    .hideETA();
     }
 }
