@@ -105,9 +105,10 @@ public class TextFileProcessor {
                 }
 
                 final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(outputFileName) + " audio.mp3");
+                final String ssml = ssmlStringWriter.toString();
 
-                try (ProgressBar progressBar = makeProgressBar(outputFile)) {
-                    speechSynthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), tempOutputFile.getAbsolutePath(), progress -> {
+                try (ProgressBar progressBar = makeProgressBar(outputFile, ssml.length())) {
+                    speechSynthesizer.synthesizeSsmlToFile(ssml, tempOutputFile.getAbsolutePath(), progress -> {
                         progressBar.setExtraMessage(progress.getMessage());
                         progressBar.stepTo(progress.getCurrentProgress());
                         progressBar.maxHint(progress.getMaxProgress());
@@ -142,11 +143,16 @@ public class TextFileProcessor {
         System.out.printf("Estimated cost: %s%n", costFormatter.format(totalEstimatedCost));
     }
 
-    private static ProgressBar makeProgressBar(File outputFile) {
-        return new ProgressBarBuilder()
+    private static ProgressBar makeProgressBar(File outputFile, long initialMax) {
+        final ProgressBar progressBar = new ProgressBarBuilder()
                     .setTaskName(outputFile.getName())
                     .clearDisplayOnFinish()
+                    .continuousUpdate()
                     .hideETA()
+                    .setInitialMax(initialMax)
                     .build();
+
+        progressBar.stepTo(0);
+        return progressBar;
     }
 }

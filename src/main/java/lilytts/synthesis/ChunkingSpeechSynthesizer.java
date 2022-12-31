@@ -13,7 +13,7 @@ import lilytts.progress.ProgressListener;
 import lilytts.ssml.SSMLSplitter;
 
 public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
-    private static final double MERGE_PROGRESS_WEIGHT = 0.30;
+    private static final double MERGE_PROGRESS_WEIGHT = 0.15;
 
     private final SpeechSynthesizer inner;
     private final SSMLSplitter splitter;
@@ -53,7 +53,7 @@ public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
         long currentProgress = 0;
 
         for (int i=0; i < chunks.size(); i++) {
-            final String progressMessage = String.format("Synthesizing audio (%2d/%2d)", i+1, chunks.size());
+            final String progressMessage = String.format("%d/%d", i+1, chunks.size());
             listener.onProgress(new ProgressEvent(progressMessage, currentProgress, maxProgress));
 
             final String chunkFilePath = StringUtil.removeFileExtension(outputFilePath) + " chunk " + (i+1) + ".mp3";
@@ -71,7 +71,7 @@ public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
         }
 
         // Merge all the synthesized chunks into one final audio file.
-        final String progressMessage = String.format("Merging %2d chunks", chunks.size());
+        final String progressMessage = String.format("Merging %d chunks", chunks.size());
         listener.onProgress(new ProgressEvent(progressMessage, totalChunkCharacters, maxProgress));
 
         final File mergedAudioFile = new File(outputFilePath);
