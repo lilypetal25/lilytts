@@ -27,6 +27,8 @@ import lilytts.ssml.SSMLWritingException;
 import lilytts.synthesis.CostEstimator;
 import lilytts.synthesis.SpeechSynthesisException;
 import lilytts.synthesis.SpeechSynthesizer;
+import me.tongfei.progressbar.ProgressBar;
+import me.tongfei.progressbar.ProgressBarBuilder;
 
 public class TextFileProcessor {
     private final SpeechSynthesizer speechSynthesizer;
@@ -103,7 +105,14 @@ public class TextFileProcessor {
                 }
 
                 final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(outputFileName) + " audio.mp3");
-                speechSynthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), tempOutputFile.getAbsolutePath());
+
+                try (ProgressBar progressBar = makeProgressBar(outputFile)) {
+                    speechSynthesizer.synthesizeSsmlToFile(ssmlStringWriter.toString(), tempOutputFile.getAbsolutePath(), progress -> {
+                        progressBar.setExtraMessage(progress.getMessage());
+                        progressBar.stepTo(progress.getCurrentProgress());
+                        progressBar.maxHint(progress.getMaxProgress());
+                    });
+                }
 
                 final MetadataContext metadataContext = new MetadataContext();
                 metadataContext.setSourceFile(textFile);
@@ -131,5 +140,13 @@ public class TextFileProcessor {
 
         final DecimalFormat costFormatter = new DecimalFormat("$######0.00");
         System.out.printf("Estimated cost: %s%n", costFormatter.format(totalEstimatedCost));
+    }
+
+    private static ProgressBar makeProgressBar(File outputFile) {
+        return new ProgressBarBuilder()
+                    .setTaskName(outputFile.getName())
+                    .clearDisplayOnFinish()
+                    .hideETA()
+                    .build();
     }
 }
