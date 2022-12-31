@@ -13,8 +13,6 @@ import lilytts.progress.ProgressListener;
 import lilytts.ssml.SSMLSplitter;
 
 public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
-    private static final double MERGE_PROGRESS_WEIGHT = 0.15;
-
     private final SpeechSynthesizer inner;
     private final SSMLSplitter splitter;
     private final AudioFileMerger merger;
