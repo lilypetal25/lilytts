@@ -33,6 +33,7 @@ import lilytts.synthesis.SpeechSynthesisException;
 import lilytts.synthesis.SpeechSynthesizer;
 import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
+import me.tongfei.progressbar.ProgressBarStyle;
 
 public class TextFileProcessor {
     private static class ParsedTextFile {
@@ -121,6 +122,8 @@ public class TextFileProcessor {
         long maxProgress = parsedTextFiles.stream()
             .filter(x -> !x.skipped)
             .collect(Collectors.summingLong(x -> x.getSsml().length()));
+
+        final int filesToProcess = (int)parsedTextFiles.stream().filter(x -> !x.isSkipped()).count();
         
         if (parsedTextFiles.stream().anyMatch(x -> !x.isSkipped())) {
             // Ensure target folder exists if there are any files to convert.
@@ -129,7 +132,7 @@ public class TextFileProcessor {
             }
         }
 
-        try (ProgressBar summaryProgressBar = makeProgressBar("Converting text to speech", maxProgress)) {
+        try (ProgressBar summaryProgressBar = makeProgressBar("Processing " + filesToProcess + " file(s)", maxProgress)) {
             for (ParsedTextFile textFile : parsedTextFiles) {
                 final int fileIndex = parsedTextFiles.indexOf(textFile);
 
@@ -138,18 +141,18 @@ public class TextFileProcessor {
                     parsedTextFiles.size(),
                     textFile.getInputFile().getName());
 
-                if (textFile.getOutputFile().exists() && textFile.getOutputFile().length() > 0) {
-                    verboseOut.printf("  => Skipping file because it already exists: %s%n", textFile.getOutputFile().getName());
-                    currentProgress += textFile.getSsml().length();
-                    continue;
-                }
-
                 if (textFile.isSkipped()) {
                     verboseOut.printf("  => Skipping file.%n", textFile.getOutputFile().getName());
                     continue;
                 }
 
                 summaryProgressBar.stepTo(currentProgress);
+                currentProgress += textFile.getSsml().length();
+
+                if (textFile.getOutputFile().exists() && textFile.getOutputFile().length() > 0) {
+                    verboseOut.printf("  => Skipping file because it already exists: %s%n", textFile.getOutputFile().getName());
+                    continue;
+                }
 
                 final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(textFile.getOutputFile().getName()) + " audio.mp3");
 
@@ -195,7 +198,7 @@ public class TextFileProcessor {
         final String ssml = ssmlStringWriter.toString();
 
         final double estimatedCost = costEstimator.getEstimatedCost(ssml);
-        final boolean skipped = fileFilter.test(inputFile);
+        final boolean skipped = !fileFilter.test(inputFile);
 
         return new ParsedTextFile(inputFile, content, ssml, estimatedCost, outputFile, skipped);
     }
@@ -203,7 +206,7 @@ public class TextFileProcessor {
     private static ProgressBar makeProgressBar(String taskName, long initialMax) {
         final ProgressBar progressBar = new ProgressBarBuilder()
                     .setTaskName(taskName)
-                    .clearDisplayOnFinish()
+                    .setStyle(ProgressBarStyle.ASCII)
                     .continuousUpdate()
                     .hideETA()
                     .setInitialMax(initialMax)

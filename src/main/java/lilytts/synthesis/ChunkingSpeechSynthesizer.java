@@ -48,8 +48,7 @@ public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
             return;
         }
 
-        final long totalChunkCharacters = chunks.stream().collect(Collectors.summingLong(x -> x.length()));
-        final long maxProgress = totalChunkCharacters + Math.round(totalChunkCharacters * MERGE_PROGRESS_WEIGHT);
+        final long maxProgress = chunks.stream().collect(Collectors.summingLong(x -> x.length()));
         long currentProgress = 0;
 
         for (int i=0; i < chunks.size(); i++) {
@@ -72,7 +71,7 @@ public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
 
         // Merge all the synthesized chunks into one final audio file.
         final String progressMessage = String.format("Merging %d chunks", chunks.size());
-        listener.onProgress(new ProgressEvent(progressMessage, totalChunkCharacters, maxProgress));
+        listener.onProgress(new ProgressEvent(progressMessage, maxProgress, maxProgress));
 
         final File mergedAudioFile = new File(outputFilePath);
         merger.mergeAudioFiles(completedChunkFiles, mergedAudioFile);
