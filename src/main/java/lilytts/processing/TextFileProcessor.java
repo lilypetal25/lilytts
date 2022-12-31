@@ -67,7 +67,7 @@ public class TextFileProcessor {
         int partsProcessed = -1;
         double totalEstimatedCost = 0.0;
 
-        for (File textFile : textFiles) {
+        for (File textFile : ProgressBar.wrap(textFiles, makeSummaryProgressBar())) {
             final FileReader inputStream = new FileReader(textFile);
             final List<ContentItem> content = this.contentParser.readContent(inputStream);
             final List<List<ContentItem>> parts = splitter.splitContent(content);
@@ -117,9 +117,8 @@ public class TextFileProcessor {
                 final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(outputFileName) + " audio.mp3");
                 final String ssml = ssmlStringWriter.toString();
 
-                try (ProgressBar progressBar = makeProgressBar(outputFile, ssml.length())) {
+                try (ProgressBar progressBar = makeSynthesisProgressBar(outputFile, ssml.length())) {
                     speechSynthesizer.synthesizeSsmlToFile(ssml, tempOutputFile.getAbsolutePath(), progress -> {
-                        progressBar.setExtraMessage(progress.getMessage());
                         progressBar.stepTo(progress.getCurrentProgress());
                         progressBar.maxHint(progress.getMaxProgress());
                     });
@@ -153,7 +152,7 @@ public class TextFileProcessor {
         System.out.printf("Estimated cost: %s%n", costFormatter.format(totalEstimatedCost));
     }
 
-    private static ProgressBar makeProgressBar(File outputFile, long initialMax) {
+    private static ProgressBar makeSynthesisProgressBar(File outputFile, long initialMax) {
         final ProgressBar progressBar = new ProgressBarBuilder()
                     .setTaskName(outputFile.getName())
                     .clearDisplayOnFinish()
@@ -164,5 +163,13 @@ public class TextFileProcessor {
 
         progressBar.stepTo(0);
         return progressBar;
+    }
+
+    private static ProgressBarBuilder makeSummaryProgressBar() {
+        return new ProgressBarBuilder()
+                    .setTaskName("Processing text files")
+                    .clearDisplayOnFinish()
+                    .continuousUpdate()
+                    .hideETA();
     }
 }
