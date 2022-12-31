@@ -121,6 +121,7 @@ public class NewsToSpeechCommand implements Callable<Integer> {
         };
 
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
+        fileProcessor.setVerbose(this.pretend);
         fileProcessor.convertTextFiles(articleFiles, albumTargetFolder, (file) -> !this.pretend);
 
         if (this.pretend || this.archiveDirectory == null || articleFiles.isEmpty()) {
