@@ -3,6 +3,8 @@ package lilytts.processing;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -38,6 +40,7 @@ public class TextFileProcessor {
     private final XMLOutputFactory xmlOutputFactory;
     private final MetadataGenerator metadataGenerator;
     private final CostEstimator costEstimator;
+    private boolean verbose = true;
 
     public TextFileProcessor(SpeechSynthesizer speechSynthesizer, ContentParser contentParser, ContentSplitter splitter, SSMLWriter ssmlWriter, MetadataGenerator metadataGenerator, CostEstimator costEstimator) {
         this.speechSynthesizer = speechSynthesizer;
@@ -53,7 +56,14 @@ public class TextFileProcessor {
         convertTextFiles(textFiles, targetFolder, x -> true);
     }
 
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+    }
+
     public void convertTextFiles(final List<File> textFiles, final File targetFolder, final Predicate<File> fileFilter) throws SpeechSynthesisException, SSMLWritingException, IOException, XMLStreamException {
+        // TODO: Encapsulate handling of the print stream.
+        final PrintStream verboseOut = this.verbose ? System.out : new PrintStream(OutputStream.nullOutputStream());
+
         int partsProcessed = -1;
         double totalEstimatedCost = 0.0;
 
@@ -63,13 +73,13 @@ public class TextFileProcessor {
             final List<List<ContentItem>> parts = splitter.splitContent(content);
 
             if (parts.size() > 1) {
-                System.out.printf("Converting file %d of %d to speech as %s part(s): %s%n",
+                verboseOut.printf("Converting file %d of %d to speech as %s part(s): %s%n",
                     textFiles.indexOf(textFile) + 1,
                     textFiles.size(),
                     parts.size(),
                     textFile.getName());
             } else {
-                System.out.printf("Converting file %d of %d to speech: %s%n",
+                verboseOut.printf("Converting file %d of %d to speech: %s%n",
                     textFiles.indexOf(textFile) + 1,
                     textFiles.size(),
                     textFile.getName());
@@ -90,12 +100,12 @@ public class TextFileProcessor {
                 totalEstimatedCost += costEstimator.getEstimatedCost(ssmlStringWriter.toString());
 
                 if (outputFile.exists() && outputFile.length() > 0) {
-                    System.out.printf("  => Skipping file because it already exists: %s%n", outputFile.getName());
+                    verboseOut.printf("  => Skipping file because it already exists: %s%n", outputFile.getName());
                     continue;
                 }
 
                 if (!fileFilter.test(textFile)) {
-                    System.out.printf("  => Skipping file.%n", outputFile.getName());
+                    verboseOut.printf("  => Skipping file.%n", outputFile.getName());
                     continue;
                 }
 
@@ -135,7 +145,7 @@ public class TextFileProcessor {
                 }
 
                 tempOutputFile.delete();
-                System.out.printf("  => Saved audio to file: %s%n", outputFile.getName());
+                verboseOut.printf("  => Saved audio to file: %s%n", outputFile.getName());
             }
         }
 

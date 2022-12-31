@@ -126,6 +126,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
         }
 
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, splitter, ssmlWriter, metadataGenerator, azureCostEstimator);
+        fileProcessor.setVerbose(this.pretend);
         fileProcessor.convertTextFiles(chapterFiles, outputDirectory, fileFilter);
 
         System.out.println("Done!");
