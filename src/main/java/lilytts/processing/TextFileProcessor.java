@@ -229,7 +229,7 @@ public class TextFileProcessor {
     private static ProgressBar makeProgressBar(String taskName, long initialMax) {
         final ProgressBarBuilder builder = new ProgressBarBuilder()
                     .setTaskName(taskName)
-                    .setStyle(ProgressBarStyle.ASCII)
+                    .setStyle(ProgressBarStyle.UNICODE_BLOCK)
                     .setInitialMax(initialMax)
                     .continuousUpdate();
 
