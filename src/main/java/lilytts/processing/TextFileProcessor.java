@@ -217,8 +217,6 @@ public class TextFileProcessor {
         final ProgressBarBuilder builder = new ProgressBarBuilder()
                     .setTaskName(taskName)
                     .setStyle(ProgressBarStyle.ASCII)
-                    .continuousUpdate()
-                    .setMaxRenderedLength(200)
                     .setInitialMax(initialMax);
 
         final ProgressBar progressBar = builder.build();
