@@ -147,6 +147,7 @@ public class TextFileProcessor {
                 }
 
                 summaryProgressBar.stepTo(currentProgress);
+                final long progressBeforeFile = currentProgress;
                 currentProgress += textFile.getSsml().length();
 
                 if (textFile.getOutputFile().exists() && textFile.getOutputFile().length() > 0) {
@@ -156,10 +157,19 @@ public class TextFileProcessor {
 
                 final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(textFile.getOutputFile().getName()) + " audio.mp3");
 
-                try (ProgressBar progressBar = makeProgressBar(textFile.getOutputFile().getName(), textFile.getSsml().length())) {
+                try (ProgressBar synthesisProgressBar = makeProgressBar(textFile.getOutputFile().getName(), textFile.getSsml().length())) {
                     speechSynthesizer.synthesizeSsmlToFile(textFile.getSsml(), tempOutputFile.getAbsolutePath(), progress -> {
-                        progressBar.stepTo(progress.getCurrentProgress());
-                        progressBar.maxHint(progress.getMaxProgress());
+                        synthesisProgressBar.stepTo(progress.getCurrentProgress());
+                        synthesisProgressBar.maxHint(progress.getMaxProgress());
+
+                        // Make an intermediate update to the summary progress bar to reflect
+                        // the progress we've made so far in this file.
+                        //
+                        // Note that the summary progress bar may use a different scale than
+                        // the synthesizer so we need to convert.
+                        final double percentDone = (double)progress.getCurrentProgress() / progress.getMaxProgress();
+                        final long fileProgress = Math.round(textFile.getSsml().length() * percentDone);
+                        summaryProgressBar.stepTo(progressBeforeFile + fileProgress);
                     });
                 }
 
@@ -204,14 +214,14 @@ public class TextFileProcessor {
     }
 
     private static ProgressBar makeProgressBar(String taskName, long initialMax) {
-        final ProgressBar progressBar = new ProgressBarBuilder()
+        final ProgressBarBuilder builder = new ProgressBarBuilder()
                     .setTaskName(taskName)
                     .setStyle(ProgressBarStyle.ASCII)
                     .continuousUpdate()
-                    .hideETA()
-                    .setInitialMax(initialMax)
-                    .build();
+                    .setMaxRenderedLength(200)
+                    .setInitialMax(initialMax);
 
+        final ProgressBar progressBar = builder.build();
         progressBar.stepTo(0);
         return progressBar;
     }
