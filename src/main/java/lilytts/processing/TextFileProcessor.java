@@ -116,7 +116,7 @@ public class TextFileProcessor {
         double totalEstimatedCost = parsedTextFiles.stream().collect(Collectors.summingDouble(x -> x.getEstimatedCost()));
 
         final DecimalFormat costFormatter = new DecimalFormat("$######0.00");
-        System.out.printf("Estimated cost: %s%n", costFormatter.format(totalEstimatedCost));
+        System.out.printf("Estimated cost: %s", costFormatter.format(totalEstimatedCost));
 
         long currentProgress = 0;
         long maxProgress = parsedTextFiles.stream()
@@ -133,6 +133,9 @@ public class TextFileProcessor {
         }
 
         try (ProgressBar summaryProgressBar = makeProgressBar("Processing " + filesToProcess + " file(s)", maxProgress)) {
+            System.out.println("");
+            System.out.printf("\033[?25l"); // Hide cursor
+
             for (ParsedTextFile textFile : parsedTextFiles) {
                 final int fileIndex = parsedTextFiles.indexOf(textFile);
 
@@ -157,20 +160,16 @@ public class TextFileProcessor {
 
                 final File tempOutputFile = new File(targetFolder, StringUtil.removeFileExtension(textFile.getOutputFile().getName()) + " audio.mp3");
 
-                try (ProgressBar synthesisProgressBar = makeProgressBar(textFile.getOutputFile().getName(), textFile.getSsml().length())) {
-                    speechSynthesizer.synthesizeSsmlToFile(textFile.getSsml(), tempOutputFile.getAbsolutePath(), progress -> {
-                        synthesisProgressBar.stepTo(progress.getCurrentProgress());
-                        synthesisProgressBar.maxHint(progress.getMaxProgress());
+                speechSynthesizer.synthesizeSsmlToFile(textFile.getSsml(), tempOutputFile.getAbsolutePath(), progress -> {
+                    printProgressMessage(textFile.getOutputFile().getName(), progress.getMessage());
 
-                        // Make an intermediate update to the summary progress bar to reflect
-                        // the progress we've made so far in this file.
-                        //
-                        // Note that the summary progress bar may use a different scale than
-                        // the synthesizer so we need to convert.
-                        final double percentDone = (double)progress.getCurrentProgress() / progress.getMaxProgress();
-                        final long fileProgress = Math.round(textFile.getSsml().length() * percentDone);
-                        summaryProgressBar.stepTo(progressBeforeFile + fileProgress);
-                    });
+                    final double percentDone = (double)progress.getCurrentProgress() / progress.getMaxProgress();
+                    final long fileProgress = Math.round(textFile.getSsml().length() * percentDone);
+                    summaryProgressBar.stepTo(progressBeforeFile + fileProgress);
+                });
+
+                if (1 + 1 == 2) {
+                    continue;
                 }
 
                 final MetadataContext metadataContext = new MetadataContext();
@@ -193,7 +192,21 @@ public class TextFileProcessor {
                 tempOutputFile.delete();
                 verboseOut.printf("  => Saved audio to file: %s%n", textFile.getOutputFile().getName());
             }
+        } finally {
+            System.out.printf("\r%1$-100s\r", ""); // Clear last progress message.
+            System.out.printf("\033[?25h"); // Show cursor again
+            System.out.println("Done!");
         }
+    }
+
+    private void printProgressMessage(final String taskName, final String progressMessage) {
+        String formattedMessage = String.format("%s (%s)", taskName, progressMessage);
+
+        if (formattedMessage.length() > 100) {
+            formattedMessage = formattedMessage.substring(0, 101);
+        }
+
+        System.out.printf("\r%1$-100s", formattedMessage);
     }
 
     private ParsedTextFile parseTextFile(File inputFile, final File targetFolder, final Predicate<File> fileFilter) throws IOException, SSMLWritingException, XMLStreamException {
@@ -217,7 +230,8 @@ public class TextFileProcessor {
         final ProgressBarBuilder builder = new ProgressBarBuilder()
                     .setTaskName(taskName)
                     .setStyle(ProgressBarStyle.ASCII)
-                    .setInitialMax(initialMax);
+                    .setInitialMax(initialMax)
+                    .continuousUpdate();
 
         final ProgressBar progressBar = builder.build();
         progressBar.stepTo(0);

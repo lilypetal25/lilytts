@@ -50,7 +50,7 @@ public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
         long currentProgress = 0;
 
         for (int i=0; i < chunks.size(); i++) {
-            final String progressMessage = String.format("%d/%d", i+1, chunks.size());
+            final String progressMessage = String.format("Synthesizing part %d of %d", i+1, chunks.size());
             listener.onProgress(new ProgressEvent(progressMessage, currentProgress, maxProgress));
 
             final String chunkFilePath = StringUtil.removeFileExtension(outputFilePath) + " chunk " + (i+1) + ".mp3";

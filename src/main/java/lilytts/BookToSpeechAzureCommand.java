@@ -125,7 +125,6 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
         final TextFileProcessor fileProcessor = new TextFileProcessor(synthesizer, contentParser, ssmlWriter, metadataGenerator, azureCostEstimator);
         fileProcessor.convertTextFiles(chapterFiles, outputDirectory, fileFilter);
 
-        System.out.println("Done!");
         return 0;
     }
 

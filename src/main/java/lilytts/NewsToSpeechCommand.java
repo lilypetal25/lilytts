@@ -89,7 +89,6 @@ public class NewsToSpeechCommand implements Callable<Integer> {
 
         System.out.printf("Album name: %s%n", albumName);
         System.out.printf("Output directory: %s%n", albumTargetFolder.getPath());
-        System.out.printf("Found %d articles to convert.%n", articleFiles.size());
         System.out.printf("Speech synthesizer: %s%n", synthesizer.getDisplayName());
 
         final MetadataGenerator metadataGenerator = new MetadataGenerator() {
@@ -147,7 +146,6 @@ public class NewsToSpeechCommand implements Callable<Integer> {
             Files.move(file.toPath(), articleArchiveTargetPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        System.out.println("Done!");
         return 0;
     }
 

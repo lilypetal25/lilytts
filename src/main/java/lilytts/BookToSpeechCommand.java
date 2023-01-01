@@ -119,7 +119,6 @@ public class BookToSpeechCommand implements Callable<Integer> {
         fileProcessor.setVerbose(this.pretend);
         fileProcessor.convertTextFiles(chapterFiles, outputDirectory, fileFilter);
 
-        System.out.println("Done!");
         return 0;
     }
 
