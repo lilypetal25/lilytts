@@ -19,7 +19,7 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
 public class SSMLSplitter {
-    private static final String[] WRAPPER_ELEMENT_NAMES = new String[] { "speak", "voice", "prosody" };
+    private static final String[] WRAPPER_ELEMENT_NAMES = new String[] { "speak", "voice", "prosody", "express-as" };
     private static final int DEFAULT_MAX_CHUNK_WEIGHT = 7000;
 
     private final int maxChunkWeight;
