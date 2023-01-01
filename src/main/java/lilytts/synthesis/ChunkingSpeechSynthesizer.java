@@ -37,6 +37,11 @@ public class ChunkingSpeechSynthesizer implements SpeechSynthesizer {
     public void synthesizeSsmlToFile(String ssml, String outputFilePath, ProgressListener listener) throws SpeechSynthesisException {
         final List<String> chunks = this.splitter.splitSSML(ssml);
         final List<File> completedChunkFiles = new ArrayList<>();
+        final File outputFile = new File(outputFilePath);
+
+        if (outputFile.exists() && outputFile.length() > 0) {
+            return;
+        }
 
         // If the file is small enough we don't need to split it.
         if (chunks.size() <= 1) {

@@ -35,7 +35,7 @@
             "request": "launch",
             "mainClass": "lilytts.App",
             "projectName": "lilytts",
-            "args": "news-to-speech ./playlist.txt ../Articles\\ Audio --archive ../Articles\\ Archive",
+            "args": "news-to-speech ./playlist.txt ../Articles\\ Audio --archive ../Articles\\ Archive --resume",
             "cwd": "/Users/lily/Library/CloudStorage/OneDrive-Personal/Articles/"
         }
     ]

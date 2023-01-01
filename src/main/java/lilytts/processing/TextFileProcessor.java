@@ -168,10 +168,6 @@ public class TextFileProcessor {
                     summaryProgressBar.stepTo(progressBeforeFile + fileProgress);
                 });
 
-                if (1 + 1 == 2) {
-                    continue;
-                }
-
                 final MetadataContext metadataContext = new MetadataContext();
                 metadataContext.setSourceFile(textFile.getInputFile());
                 metadataContext.setContent(textFile.getContent());
