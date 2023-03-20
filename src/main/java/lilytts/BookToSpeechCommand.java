@@ -130,7 +130,8 @@ public class BookToSpeechCommand implements Callable<Integer> {
 
     private void sortChapterFiles(List<File> chapterFiles) {
         final Map<String, Integer> weightingsByName = Map.of(
-            "front matter", -3,
+            "front matter", -4,
+            "forward", -3,
             "preface", -2,
             "introduction", -1,
             "conclusion", 1,
