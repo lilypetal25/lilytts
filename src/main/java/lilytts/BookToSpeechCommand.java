@@ -132,6 +132,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
         final Map<String, Integer> weightingsByName = Map.of(
             "front matter", -4,
             "forward", -3,
+            "foreword", -3,
             "preface", -2,
             "introduction", -1,
             "conclusion", 1,
