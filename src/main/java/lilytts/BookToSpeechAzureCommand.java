@@ -136,8 +136,9 @@ public class BookToSpeechAzureCommand implements Callable<Integer> {
 
     private void sortChapterFiles(List<File> chapterFiles) {
         final Map<String, Integer> weightingsByName = Map.of(
-            "front matter", -3,
-            "preface", -2,
+            "front matter", -4,
+            "preface", -3,
+            "prologue", -2,
             "introduction", -1,
             "conclusion", 1,
             "postscript", 2
