@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -129,12 +130,15 @@ public class BookToSpeechCommand implements Callable<Integer> {
     }
 
     private void sortChapterFiles(List<File> chapterFiles) {
+        final Comparator<CharSequence> alphaNumComparator = StringUtil.alphaNumComparator();
+
         final Map<String, Integer> weightingsByName = Map.of(
-            "front matter", -4,
-            "forward", -3,
-            "foreword", -3,
-            "preface", -2,
-            "introduction", -1,
+            "front matter", -6,
+            "forward", -5,
+            "foreword", -4,
+            "preface", -3,
+            "introduction", -2,
+            "prologue", -1,
             "conclusion", 1,
             "postscript", 2
         );
@@ -150,7 +154,7 @@ public class BookToSpeechCommand implements Callable<Integer> {
                 return Integer.compare(file1Weighting, file2Weighting);
             }
 
-            return file1.getName().compareTo(file2.getName());
+            return alphaNumComparator.compare(file1.getName(), file2.getName());
         });
     }
 
