@@ -58,9 +58,10 @@ public class StringUtil {
     public static String[] padNumbers(CharSequence first, CharSequence second, Character padCharacter) {
         final Matcher matcher1 = NUMBER_PATTERN.matcher(first);
         final Matcher matcher2 = NUMBER_PATTERN.matcher(second);
+        final int bufferCapacity = Math.max(first.length(), second.length());
 
-        final StringBuilder result1 = new StringBuilder(first.length());
-        final StringBuilder result2 = new StringBuilder(second.length());
+        final StringBuilder result1 = new StringBuilder(bufferCapacity);
+        final StringBuilder result2 = new StringBuilder(bufferCapacity);
 
         while (matcher1.find() && matcher2.find()) {
             final String match1 = matcher1.group();
