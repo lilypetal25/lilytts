@@ -12,7 +12,7 @@
             "voice": {
                 "description": "The identifier of the Azure voice to use",
                 "type": "string",
-                "enum": ["Aria", "Brandon", "Christopher", "Cora", "Eric", "Jenny", "Libby", "Sara", "Jacob", "Jane", "Steffan", "Tony", "Nancy", "Roger"]
+                "enum": ["Aria", "Andrew", "Brandon", "Christopher", "Cora", "Eric", "Jenny", "Libby", "Sara", "Jacob", "Jane", "Steffan", "Tony", "Nancy", "Roger"]
             },
             "maxPartCharacters": {
                 "description": "The maximum size, in text characters, of an individual MP3 file",
